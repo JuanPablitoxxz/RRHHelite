@@ -14,6 +14,7 @@ import CandidateDetail from './views/CandidateDetail';
 import JobsList from './views/JobsList';
 import InterviewsList from './views/InterviewsList';
 import EvaluationsList from './views/EvaluationsList';
+import UsersList from './views/UsersList';
 import Settings from './views/Settings';
 import Auth from './views/Auth';
 import { View } from './types';
@@ -125,6 +126,7 @@ export default function App() {
           {currentView === 'detail' && <CandidateDetail candidateId={selectedCandidateId} onBack={() => setCurrentView('candidates')} />}
           
           {currentView === 'evaluations' && <EvaluationsList />}
+          {currentView === 'users' && <UsersList />}
           {currentView === 'settings' && <Settings />}
         </main>
       </div>

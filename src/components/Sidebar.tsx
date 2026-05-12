@@ -5,8 +5,10 @@ import {
   Calendar, 
   FileText, 
   Settings, 
+  Settings, 
   LogOut,
-  Target
+  Target,
+  Shield
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { View, UserRole } from '../types';
@@ -28,6 +30,7 @@ export default function Sidebar({ currentView, onNavigate, userRole }: SidebarPr
     { id: 'jobs', icon: Briefcase, label: 'Vacantes', roles: ['admin', 'interviewer', 'user', 'applicant'] },
     { id: 'interviews', icon: Calendar, label: 'Entrevistas', roles: ['admin', 'interviewer'] },
     { id: 'evaluations', icon: FileText, label: 'Evaluaciones', roles: ['admin', 'interviewer'] },
+    { id: 'users', icon: Shield, label: 'Usuarios', roles: ['admin'] },
     { id: 'settings', icon: Settings, label: 'Ajustes', roles: ['admin'] },
   ];
 

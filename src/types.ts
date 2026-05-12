@@ -1,4 +1,4 @@
-export type View = 'dashboard' | 'candidates' | 'jobs' | 'interviews' | 'evaluations' | 'settings' | 'detail';
+export type View = 'dashboard' | 'users' | 'candidates' | 'jobs' | 'interviews' | 'evaluations' | 'settings' | 'detail';
 
 export type UserRole = 'admin' | 'interviewer' | 'user' | 'applicant';
 
