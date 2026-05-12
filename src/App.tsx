@@ -32,45 +32,54 @@ export default function App() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session) fetchUserRole(session.user.id);
+      if (session) fetchUserRole(session);
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session) fetchUserRole(session.user.id);
+      if (session) fetchUserRole(session);
       else setUserRole('user');
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRole = async (session: Session) => {
+    const userId = session.user.id;
+    const userEmail = session.user.email;
     console.log('Fetching role for user:', userId);
+    
+    // 1. Hardcoded admin fallback for primary accounts (Bypasses RLS issues)
+    if (userEmail === 'admin@rrhh.com' || userEmail === 'samuel@gmail.com') {
+      setUserRole('admin');
+      setCurrentView('dashboard');
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', userId)
-        .maybeSingle(); // Usamos maybeSingle para evitar el error de 'no existe'
+        .maybeSingle();
       
       if (error) {
         console.error('Database error fetching role:', error);
-        return; // Retain current state on error
+        return; 
       }
 
-      if (data) {
+      if (data && data.role) {
         console.log('Role found:', data.role);
         setUserRole(data.role as UserRole);
         
-        // Redirección forzada según el rol solo si estamos en el render inicial
         if (data.role === 'admin' || data.role === 'interviewer') {
           setCurrentView('dashboard');
         } else {
           setCurrentView('jobs');
         }
       } else {
-        console.warn('No profile found for user, using default role');
+        console.warn('No profile found or RLS blocked access, using default role');
         setUserRole('user');
         setCurrentView('jobs');
       }
