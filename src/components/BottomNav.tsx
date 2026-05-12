@@ -16,15 +16,28 @@ export default function BottomNav({ currentView, onNavigate }: BottomNavProps) {
   ];
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-100 h-20 px-4 flex items-center justify-around z-50">
+    <nav className="bottom-nav">
       {items.map((item) => {
         const Icon = item.icon;
         const isActive = currentView === item.id || (currentView === 'detail' && item.id === 'candidates');
 
         if (item.isSpecial) {
           return (
-            <div key={item.id} className="relative -top-6">
-              <button className="w-14 h-14 bg-primary text-white rounded-2xl shadow-xl shadow-primary/30 flex items-center justify-center active:scale-90 transition-transform">
+            <div key={item.id} style={{ position: 'relative', top: '-24px' }}>
+              <button 
+                style={{ 
+                  width: '56px', 
+                  height: '56px', 
+                  background: 'var(--primary)', 
+                  color: 'white', 
+                  borderRadius: '16px', 
+                  border: 'none',
+                  boxShadow: '0 8px 16px rgba(13, 148, 136, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
                 <Icon size={28} />
               </button>
             </div>
@@ -35,10 +48,10 @@ export default function BottomNav({ currentView, onNavigate }: BottomNavProps) {
           <button 
             key={item.id}
             onClick={() => onNavigate(item.id as View)}
-            className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'text-primary scale-110' : 'text-slate-400'}`}
+            className={`bottom-nav-item ${isActive ? 'active' : ''}`}
           >
-            <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
-            <span className="text-[10px] font-bold uppercase tracking-tighter">{item.label}</span>
+            <Icon size={22} />
+            <span>{item.label}</span>
           </button>
         );
       })}
