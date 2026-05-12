@@ -122,10 +122,10 @@ export default function App() {
           {currentView === 'dashboard' && <Dashboard />}
           {currentView === 'candidates' && <CandidatesList onSelectCandidate={handleNavigate} />}
           {currentView === 'jobs' && <JobsList userRole={userRole} userEmail={session.user.email || ''} userName={session.user.user_metadata?.full_name || ''} />}
-          {currentView === 'interviews' && <InterviewsList />}
-          {currentView === 'detail' && <CandidateDetail candidateId={selectedCandidateId} onBack={() => setCurrentView('candidates')} />}
+          {currentView === 'interviews' && <InterviewsList userRole={userRole} userEmail={session.user.email || ''} userName={session.user.user_metadata?.full_name || ''} />}
+          {currentView === 'detail' && <CandidateDetail candidateId={selectedCandidateId} onBack={() => setCurrentView('candidates')} userEmail={session.user.email || ''} />}
           
-          {currentView === 'evaluations' && <EvaluationsList />}
+          {currentView === 'evaluations' && <EvaluationsList userRole={userRole} userEmail={session.user.email || ''} userName={session.user.user_metadata?.full_name || ''} />}
           {currentView === 'users' && <UsersList />}
           {currentView === 'settings' && <Settings />}
         </main>

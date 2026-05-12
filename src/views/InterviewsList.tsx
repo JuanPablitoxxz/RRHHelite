@@ -14,7 +14,15 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-export default function InterviewsList() {
+import { UserRole } from '../types';
+
+interface InterviewsListProps {
+  userRole?: UserRole | string;
+  userEmail?: string;
+  userName?: string;
+}
+
+export default function InterviewsList({ userRole = 'admin', userEmail = '' }: InterviewsListProps) {
   const [interviews, setInterviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,17 +33,23 @@ export default function InterviewsList() {
   const fetchInterviews = async () => {
     setLoading(true);
     try {
-      // Fetch interviews joined with candidate info
-      const { data, error } = await supabase
+      let query = supabase
         .from('interviews')
         .select(`
           *,
-          candidates (
+          candidates!inner (
             full_name,
-            position
+            position,
+            email
           )
-        `)
-        .order('scheduled_at', { ascending: true });
+        `);
+
+      // Filtrar si es aspirante para que vea solo las suyas
+      if (userRole === 'applicant') {
+        query = query.eq('candidates.email', userEmail);
+      }
+
+      const { data, error } = await query.order('scheduled_at', { ascending: true });
       
       if (error) throw error;
       setInterviews(data || []);
@@ -110,18 +124,30 @@ export default function InterviewsList() {
             </div>
 
             <div style={{ display: 'flex', gap: '12px' }}>
-              {int.status === 'Pendiente' && (
+              {(userRole === 'admin' || userRole === 'interviewer') ? (
+                <>
+                  {int.status === 'Pendiente' && (
+                    <button 
+                      onClick={() => handleCompleteInterview(int.id, int.candidate_id)}
+                      className="primary-btn" 
+                      style={{ flex: 1, justifyContent: 'center', padding: '10px' }}
+                    >
+                      <CheckCircle2 size={18} /> Marcar Realizada
+                    </button>
+                  )}
+                  <button className="secondary-btn" style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
+                    Ver Perfil <ChevronRight size={18} />
+                  </button>
+                </>
+              ) : (
                 <button 
-                  onClick={() => handleCompleteInterview(int.id, int.candidate_id)}
+                  onClick={() => window.open(int.location.startsWith('http') ? int.location : `https://${int.location}`, '_blank')}
                   className="primary-btn" 
                   style={{ flex: 1, justifyContent: 'center', padding: '10px' }}
                 >
-                  <CheckCircle2 size={18} /> Marcar Realizada
+                  <Video size={18} /> Ingresar a Entrevista
                 </button>
               )}
-              <button className="secondary-btn" style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
-                Ver Perfil <ChevronRight size={18} />
-              </button>
             </div>
           </div>
         )) : (

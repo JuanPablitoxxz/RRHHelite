@@ -35,6 +35,30 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
+-- MESSAGES TABLE FOR CHAT
+CREATE TABLE IF NOT EXISTS public.messages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  sender_email text NOT NULL,
+  receiver_email text NOT NULL,
+  content text NOT NULL,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read their own messages"
+  ON public.messages FOR SELECT
+  TO authenticated
+  USING (
+    auth.jwt() ->> 'email' = sender_email 
+    OR auth.jwt() ->> 'email' = receiver_email
+  );
+
+CREATE POLICY "Users can insert messages as sender"
+  ON public.messages FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.jwt() ->> 'email' = sender_email);
+
 -- TABLA DE CANDIDATOS
 CREATE TABLE IF NOT EXISTS candidates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { FileText, Loader2, Star, User, Calendar } from 'lucide-react';
+import { FileText, Loader2, Star, User, Calendar, CheckCircle2 } from 'lucide-react';
 
 interface Evaluation {
   id: string;
@@ -13,9 +13,32 @@ interface Evaluation {
   candidate_name?: string; // We'll join this
 }
 
-export default function EvaluationsList() {
+import { UserRole } from '../types';
+
+interface Evaluation {
+  id: string;
+  candidate_id: string;
+  interviewer_name: string;
+  score: number;
+  observations: string;
+  created_at: string;
+  candidate_name?: string;
+}
+
+interface EvaluationsListProps {
+  userRole?: UserRole | string;
+  userEmail?: string;
+  userName?: string;
+}
+
+export default function EvaluationsList({ userRole = 'admin', userEmail = '', userName = '' }: EvaluationsListProps) {
   const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [myCandidateId, setMyCandidateId] = useState<string | null>(null);
+  
+  // Applicant form state
+  const [testAnswers, setTestAnswers] = useState({ q1: '', q2: '' });
+  const [hasCompletedTest, setHasCompletedTest] = useState(false);
 
   useEffect(() => {
     fetchEvaluations();
@@ -24,17 +47,22 @@ export default function EvaluationsList() {
   const fetchEvaluations = async () => {
     setLoading(true);
     try {
-      // Usamos inner join manual simulado o consulta directa si hay relación en Supabase
-      // En Supabase, para hacer join con foreign key:
-      const { data, error } = await supabase
+      let query = supabase
         .from('evaluations')
         .select(`
           *,
-          candidates (
-            full_name
+          candidates!inner (
+            id,
+            full_name,
+            email
           )
-        `)
-        .order('created_at', { ascending: false });
+        `);
+
+      if (userRole === 'applicant') {
+        query = query.eq('candidates.email', userEmail);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       
@@ -44,8 +72,48 @@ export default function EvaluationsList() {
       }));
       
       setEvaluations(formatted);
+
+      if (userRole === 'applicant') {
+        const completed = formatted.some(e => e.interviewer_name === 'Prueba Automatizada');
+        setHasCompletedTest(completed);
+        
+        // Fetch candidate ID for submitting
+        const { data: candData } = await supabase.from('candidates').select('id').eq('email', userEmail).single();
+        if (candData) setMyCandidateId(candData.id);
+      }
     } catch (error) {
       console.error('Error fetching evaluations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmitTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!myCandidateId) return;
+    
+    setLoading(true);
+    try {
+      // Calculate a random score for the demo
+      const score = Math.floor(Math.random() * 2) + 4; // 4 or 5
+      const obs = `Q1: ${testAnswers.q1}\nQ2: ${testAnswers.q2}`;
+      
+      const { error } = await supabase.from('evaluations').insert([{
+        candidate_id: myCandidateId,
+        interviewer_name: 'Prueba Automatizada',
+        score: score,
+        observations: obs
+      }]);
+
+      if (error) throw error;
+      
+      // Upgrade stage to Contratado or wait for Admin to do it? 
+      // The user just said "eso generar unos puntajes que le saldran al reclutador"
+      
+      alert('¡Evaluación completada con éxito!');
+      fetchEvaluations();
+    } catch (err) {
+      console.error('Error submitting test:', err);
     } finally {
       setLoading(false);
     }
@@ -78,12 +146,66 @@ export default function EvaluationsList() {
     >
       <div className="page-title-section">
         <div>
-          <h2>Evaluaciones de Candidatos</h2>
-          <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Revisa el desempeño de los candidatos en sus entrevistas.</p>
+          <h2>{userRole === 'applicant' ? 'Tu Evaluación' : 'Evaluaciones de Candidatos'}</h2>
+          <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>
+            {userRole === 'applicant' 
+              ? 'Completa esta prueba para avanzar en tu proceso de selección.'
+              : 'Revisa el desempeño de los candidatos en sus entrevistas.'
+            }
+          </p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
+      {userRole === 'applicant' ? (
+        <div className="dashboard-card" style={{ padding: '32px', maxWidth: '600px', margin: '0 auto' }}>
+          {hasCompletedTest ? (
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <div style={{ width: '80px', height: '80px', background: '#D1FAE5', color: '#10B981', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+                <CheckCircle2 size={40} />
+              </div>
+              <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '12px' }}>¡Prueba Completada!</h3>
+              <p style={{ color: 'var(--text-muted)' }}>Tus resultados han sido enviados al equipo de reclutamiento. Te notificaremos los siguientes pasos muy pronto.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmitTest} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ padding: '16px', background: 'var(--primary-light)', borderRadius: '12px', border: '1px solid var(--primary)', color: 'var(--primary)', marginBottom: '8px' }}>
+                <h4 style={{ fontWeight: 800, marginBottom: '4px' }}>Prueba de Habilidades</h4>
+                <p style={{ fontSize: '13px' }}>Por favor, responde a las siguientes preguntas con honestidad. Tómate tu tiempo.</p>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>1. Describe una situación donde tuviste que resolver un problema complejo bajo presión.</label>
+                <textarea 
+                  required
+                  value={testAnswers.q1}
+                  onChange={e => setTestAnswers({...testAnswers, q1: e.target.value})}
+                  className="auth-input"
+                  style={{ width: '100%', height: '120px', resize: 'none', padding: '16px' }}
+                  placeholder="Escribe tu respuesta aquí..."
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>2. ¿Qué valor principal crees que aportarías a nuestro equipo?</label>
+                <textarea 
+                  required
+                  value={testAnswers.q2}
+                  onChange={e => setTestAnswers({...testAnswers, q2: e.target.value})}
+                  className="auth-input"
+                  style={{ width: '100%', height: '120px', resize: 'none', padding: '16px' }}
+                  placeholder="Escribe tu respuesta aquí..."
+                />
+              </div>
+
+              <button type="submit" className="primary-btn" style={{ justifyContent: 'center', padding: '16px', fontSize: '16px', marginTop: '12px' }}>
+                Enviar Evaluación
+              </button>
+            </form>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '24px' }}>
+
         {evaluations.length > 0 ? evaluations.map((evaluation) => (
           <div key={evaluation.id} className="dashboard-card" style={{ padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'flex-start' }}>
@@ -120,6 +242,7 @@ export default function EvaluationsList() {
           </div>
         )}
       </div>
+      )}
     </motion.div>
   );
 }

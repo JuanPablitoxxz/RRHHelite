@@ -19,21 +19,24 @@ import {
   Clock
 } from 'lucide-react';
 import { Candidate } from '../types';
+import ChatModal from '../components/ChatModal';
 
 interface CandidateDetailProps {
   candidateId: string | null;
   onBack: () => void;
+  userEmail: string;
 }
 
 const STAGES = ['Postulación', 'Preselección', 'Entrevista', 'Evaluación', 'Contratado'];
 
-export default function CandidateDetail({ candidateId, onBack }: CandidateDetailProps) {
+export default function CandidateDetail({ candidateId, onBack, userEmail }: CandidateDetailProps) {
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState('');
   const [noteRating, setNoteRating] = useState(5);
   const [savingNote, setSavingNote] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   
   // Interview scheduling
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -76,6 +79,16 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
 
   const handleUpdateStage = async (newStage: string) => {
     if (!candidate) return;
+    
+    const newStageIndex = STAGES.indexOf(newStage);
+    const currentStageIndex = STAGES.indexOf(candidate.stage);
+    
+    // Prevent backward steps
+    if (newStageIndex <= currentStageIndex) {
+      alert('Las etapas solo pueden avanzar, no se puede retroceder de estado.');
+      return;
+    }
+
     if (newStage === 'Entrevista') {
       setIsScheduleModalOpen(true);
       return;
@@ -94,6 +107,15 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
       
       if (error) throw error;
       setCandidate({ ...candidate, stage: newStage });
+
+      // Si la etapa es mayor a Postulación (índice 0), y es Preselección (índice 1) o más, pasarlo a Aspirante
+      const newStageIndex = STAGES.indexOf(newStage);
+      if (newStageIndex > 0) {
+        await supabase
+          .from('profiles')
+          .update({ role: 'applicant' })
+          .eq('email', candidate.email);
+      }
     } catch (error) {
       console.error('Error updating stage:', error);
     }
@@ -183,7 +205,9 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
                 <p style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '18px' }}>{candidate.position}</p>
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
-                <button className="secondary-btn" style={{ padding: '12px 24px', fontWeight: 700 }}>Enviar Mensaje</button>
+                <button onClick={() => setIsChatOpen(true)} className="secondary-btn" style={{ padding: '12px 24px', fontWeight: 700 }}>
+                  <MessageSquare size={18} /> Enviar Mensaje
+                </button>
                 <button 
                   onClick={() => setIsScheduleModalOpen(true)}
                   className="primary-btn" 
@@ -336,6 +360,14 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
           </div>
         )}
       </AnimatePresence>
+
+      <ChatModal 
+        isOpen={isChatOpen} 
+        onClose={() => setIsChatOpen(false)} 
+        currentUserEmail={userEmail} 
+        recipientEmail={candidate.email} 
+        recipientName={candidate.full_name} 
+      />
     </motion.div>
   );
 }
