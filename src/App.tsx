@@ -19,6 +19,7 @@ import { Session } from '@supabase/supabase-js';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
+  const [userRole, setUserRole] = useState<UserRole>('user');
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,19 +30,36 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session) fetchUserRole(session.user.id);
       setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session) fetchUserRole(session.user.id);
+      else setUserRole('user');
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const fetchUserRole = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    
+    if (data) {
+      setUserRole(data.role);
+      // Redirect based on role if needed
+      if (data.role === 'user' || data.role === 'applicant') {
+        setCurrentView('jobs');
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -58,7 +76,7 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <Sidebar currentView={currentView} onNavigate={handleNavigate} />
+      <Sidebar currentView={currentView} onNavigate={handleNavigate} userRole={userRole} />
       
       <div className="main-wrapper">
         <Header user={session.user} />

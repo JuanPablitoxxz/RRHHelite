@@ -1,4 +1,13 @@
-export type View = 'dashboard' | 'candidates' | 'detail';
+export type View = 'dashboard' | 'candidates' | 'jobs' | 'interviews' | 'evaluations' | 'settings' | 'detail';
+
+export type UserRole = 'admin' | 'interviewer' | 'user' | 'applicant';
+
+export interface Profile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: UserRole;
+}
 
 export interface Candidate {
   id: string;

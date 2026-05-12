@@ -1,6 +1,36 @@
 -- HABILITAR EXTENSIÓN PARA UUID
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- TABLA DE PERFILES Y ROLES
+CREATE TABLE IF NOT EXISTS profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    full_name TEXT,
+    role TEXT DEFAULT 'user' CHECK (role IN ('admin', 'interviewer', 'user', 'applicant')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- HABILITAR RLS PARA PERFILES
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT TO authenticated USING (
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
+);
+
+-- FUNCION Y TRIGGER PARA CREAR PERFIL AUTOMATICAMENTE AL REGISTRARSE
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, full_name, role)
+  VALUES (new.id, new.email, new.raw_user_metadata->>'full_name', 'admin'); -- El primero será admin por defecto en este demo, o 'user' según prefieras
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
 -- TABLA DE CANDIDATOS
 CREATE TABLE IF NOT EXISTS candidates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
