@@ -53,7 +53,7 @@ export default function App() {
       <Sidebar currentView={currentView} onNavigate={setCurrentView} />
       
       <div className="main-wrapper">
-        <Header />
+        <Header user={session.user} />
         
         <main>
           {currentView === 'dashboard' && <Dashboard />}

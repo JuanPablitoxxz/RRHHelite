@@ -1,183 +1,162 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
-import { 
-  Search, 
-  UserPlus, 
-  MoreVertical, 
-  Star, 
-  ChevronLeft, 
-  ChevronRight,
-  Filter,
-  ArrowUpDown
-} from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Star, MapPin, Mail, Phone, Loader2, UserPlus } from 'lucide-react';
 import { Candidate, View } from '../types';
-
-const CANDIDATES: Candidate[] = [
-  {
-    id: '1',
-    name: 'Elena Rodríguez',
-    email: 'elena.rod@example.com',
-    position: 'Senior UX Designer',
-    stage: 'Entrevista',
-    rating: 4,
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100'
-  },
-  {
-    id: '2',
-    name: 'Javier Torres',
-    email: 'j.torres@techflow.io',
-    position: 'Lead Backend Engineer',
-    stage: 'Contratado',
-    rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100'
-  },
-  {
-    id: '3',
-    name: 'Marta Silva',
-    email: 'marta.silva@hrpro.com',
-    position: 'Data Analyst',
-    stage: 'Pruebe Técnica',
-    rating: 3,
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=100'
-  },
-  {
-    id: '4',
-    name: 'Carlos Méndez',
-    email: 'carlos.m@devstudio.com',
-    position: 'Product Owner',
-    stage: 'Entrevista',
-    rating: 4,
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=100'
-  }
-];
 
 interface CandidatesListProps {
   onSelectCandidate: (view: View) => void;
 }
 
 export default function CandidatesList({ onSelectCandidate }: CandidatesListProps) {
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchCandidates();
+  }, []);
+
+  const fetchCandidates = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('candidates')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setCandidates(data || []);
+    } catch (error) {
+      console.error('Error fetching candidates:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredCandidates = candidates.filter(c => 
+    c.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="content-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+        <Loader2 className="animate-spin" size={40} color="var(--primary)" />
+      </div>
+    );
+  }
+
   return (
     <motion.div 
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="space-y-8"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="content-area"
     >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Candidatos</h2>
-        
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-1 max-w-4xl lg:ml-12">
-          <div className="relative flex-1 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-            <input 
-              type="text" 
-              placeholder="Buscar candidatos por nombre, correo..."
-              className="w-full pl-12 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-primary/5 focus:bg-white focus:border-primary transition-all"
-            />
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <select className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-sm font-semibold text-slate-600 focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer">
-              <option>Etapa</option>
-              <option>Postulación</option>
-              <option>Preselección</option>
-              <option>Entrevista</option>
-              <option>Contratado</option>
-            </select>
-            <select className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-sm font-semibold text-slate-600 focus:outline-none focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer">
-              <option>Posición</option>
-              <option>UX Designer</option>
-              <option>Developer</option>
-              <option>Analyst</option>
-            </select>
-          </div>
+      <div className="page-title-section">
+        <div>
+          <h2>Base de Candidatos</h2>
+          <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Gestiona y evalúa el talento de tu organización</p>
         </div>
-
-        <button className="primary-btn shrink-0">
-          <UserPlus size={20} />
+        <button className="new-job-btn">
+          <UserPlus size={18} />
           Añadir Candidato
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/50 border-b border-slate-100">
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  <div className="flex items-center gap-2">
-                    Candidato <ArrowUpDown size={12} />
-                  </div>
-                </th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Etapa</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Posición</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Calificación</th>
-                <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {CANDIDATES.map((candidate) => (
-                <tr 
-                  key={candidate.id} 
-                  onClick={() => onSelectCandidate('detail')}
-                  className="group hover:bg-slate-50/50 transition-colors cursor-pointer"
-                >
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <img src={candidate.avatar} alt="" className="w-11 h-11 rounded-full object-cover border-2 border-white shadow-sm ring-1 ring-slate-100 transition-transform group-hover:scale-105" />
-                      <div>
-                        <p className="text-sm font-bold text-slate-900 leading-tight">{candidate.name}</p>
-                        <p className="text-xs font-medium text-slate-400">{candidate.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest inline-flex items-center gap-2 ${
-                      candidate.stage === 'Contratado' ? 'bg-emerald-50 text-emerald-600' :
-                      candidate.stage === 'Entrevista' ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-600'
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        candidate.stage === 'Contratado' ? 'bg-emerald-500' :
-                        candidate.stage === 'Entrevista' ? 'bg-indigo-500' : 'bg-slate-400'
-                      }`} />
-                      {candidate.stage}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="text-sm font-bold text-slate-700">{candidate.position}</p>
-                  </td>
-                  <td className="px-8 py-6 text-center">
-                    <div className="flex items-center justify-center gap-0.5">
-                      {[...Array(5)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          size={14} 
-                          className={i < candidate.rating ? 'fill-primary text-primary' : 'text-slate-200'} 
-                        />
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-8 py-6 text-right">
-                    <button className="p-2 text-slate-400 hover:text-slate-900 hover:bg-white rounded-xl transition-all shadow-sm shadow-transparent hover:shadow-slate-100">
-                      <MoreVertical size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="dashboard-card" style={{ padding: '0', overflow: 'hidden' }}>
+        <div style={{ padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '16px' }}>
+          <div className="search-bar" style={{ flex: 1, margin: 0 }}>
+            <Search size={18} color="#64748B" />
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre, cargo o correo..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button className="secondary-btn" style={{ padding: '10px 16px' }}>
+            <Filter size={18} />
+            Filtros
+          </button>
         </div>
 
-        <div className="px-8 py-5 border-t border-slate-50 bg-slate-50/30 flex items-center justify-between">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Mostrando 1 a 4 de 128 candidatos</p>
-          <div className="flex items-center gap-2">
-            <button className="p-2 border border-slate-200 rounded-xl text-slate-400 hover:bg-white hover:text-slate-900 transition-all">
-              <ChevronLeft size={18} />
-            </button>
-            <button className="w-10 h-10 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20">1</button>
-            <button className="w-10 h-10 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-white transition-all">2</button>
-            <button className="w-10 h-10 border border-slate-200 rounded-xl font-bold text-sm text-slate-600 hover:bg-white transition-all">3</button>
-            <button className="p-2 border border-slate-200 rounded-xl text-slate-400 hover:bg-white hover:text-slate-900 transition-all">
-              <ChevronRight size={18} />
-            </button>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
+              <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Candidato</th>
+              <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Etapa</th>
+              <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Posición</th>
+              <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Calificación</th>
+              <th style={{ padding: '16px 24px', fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}></th>
+            </tr>
+          </thead>
+          <tbody style={{ divideY: '1px solid var(--border)' }}>
+            {filteredCandidates.length > 0 ? filteredCandidates.map((c) => (
+              <tr 
+                key={c.id} 
+                onClick={() => onSelectCandidate('detail')}
+                style={{ borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.2s' }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+              >
+                <td style={{ padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
+                      {c.full_name?.[0]}
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-main)' }}>{c.full_name}</p>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{c.email}</p>
+                    </div>
+                  </div>
+                </td>
+                <td style={{ padding: '20px 24px' }}>
+                  <span style={{ 
+                    fontSize: '11px', 
+                    fontWeight: 700, 
+                    padding: '6px 12px', 
+                    borderRadius: '20px',
+                    background: c.stage === 'Contratado' ? 'var(--secondary-light)' : 'var(--primary-light)',
+                    color: c.stage === 'Contratado' ? 'var(--secondary)' : 'var(--primary)'
+                  }}>
+                    {c.stage}
+                  </span>
+                </td>
+                <td style={{ padding: '20px 24px', fontSize: '14px', fontWeight: 600, color: 'var(--text-main)' }}>
+                  {c.position}
+                </td>
+                <td style={{ padding: '20px 24px' }}>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star key={s} size={14} fill={s <= (c.rating || 0) ? '#F59E0B' : 'transparent'} color={s <= (c.rating || 0) ? '#F59E0B' : '#CBD5E1'} />
+                    ))}
+                  </div>
+                </td>
+                <td style={{ padding: '20px 24px', textAlign: 'right' }}>
+                  <button style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                    <MoreHorizontal size={20} />
+                  </button>
+                </td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  {searchTerm ? 'No se encontraron candidatos para esta búsqueda.' : 'No hay candidatos registrados aún.'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        
+        <div style={{ padding: '16px 24px', background: 'var(--surface)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>
+            Mostrando {filteredCandidates.length} candidatos
+          </p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="secondary-btn" style={{ padding: '6px 12px', fontSize: '12px' }} disabled>Anterior</button>
+            <button className="secondary-btn" style={{ padding: '6px 12px', fontSize: '12px' }} disabled>Siguiente</button>
           </div>
         </div>
       </div>

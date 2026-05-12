@@ -1,6 +1,15 @@
 import { Search, Bell, HelpCircle } from 'lucide-react';
+import { User } from '@supabase/supabase-js';
 
-export default function Header() {
+interface HeaderProps {
+  user: User;
+}
+
+export default function Header({ user }: HeaderProps) {
+  // Get name from user_metadata or fallback to email
+  const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
+  const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+
   return (
     <header className="header">
       <div className="search-bar">
@@ -20,14 +29,20 @@ export default function Header() {
           <HelpCircle size={20} style={{ cursor: 'pointer' }} />
         </div>
         <div style={{ textAlign: 'right', marginRight: '12px' }}>
-          <p style={{ fontSize: '13px', fontWeight: '700', color: '#1E293B' }}>Alex Thompson</p>
-          <p style={{ fontSize: '11px', fontWeight: '600', color: '#64748B' }}>Senior HR</p>
+          <p style={{ fontSize: '13px', fontWeight: '700', color: '#1E293B', textTransform: 'capitalize' }}>{fullName}</p>
+          <p style={{ fontSize: '11px', fontWeight: '600', color: '#64748B' }}>Administrador RRHH</p>
         </div>
-        <img 
-          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=100" 
-          alt="Profile" 
-          className="user-avatar" 
-        />
+        {user.user_metadata?.avatar_url ? (
+          <img 
+            src={user.user_metadata.avatar_url} 
+            alt="Profile" 
+            className="user-avatar" 
+          />
+        ) : (
+          <div className="user-avatar" style={{ background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '12px' }}>
+            {initials}
+          </div>
+        )}
       </div>
     </header>
   );

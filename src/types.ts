@@ -2,7 +2,7 @@ export type View = 'dashboard' | 'candidates' | 'detail';
 
 export interface Candidate {
   id: string;
-  name: string;
+  full_name: string;
   email: string;
   position: string;
   stage: string;

@@ -1,67 +1,110 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { motion } from 'motion/react';
 import { 
   Users, 
   Briefcase, 
   Calendar, 
   ChevronRight, 
-  Video, 
-  MapPin, 
   Sparkles,
-  UserPlus
+  UserPlus,
+  Loader2
 } from 'lucide-react';
 import { Activity, Interview } from '../types';
 
-const ACTIVITIES: Activity[] = [
-  {
-    id: '1',
-    title: 'Sofia Martínez',
-    description: 'Aplicó para UX Lead',
-    time: 'Hace 15 min',
-    user: { name: 'Sofia Martínez', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100' },
-    type: 'postulation'
-  },
-  {
-    id: '2',
-    title: 'Lucas Varela',
-    description: 'Entrevista agendada con Equipo Técnico',
-    time: 'Hace 2 horas',
-    user: { name: 'Lucas Varela', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100' },
-    type: 'interview'
-  },
-  {
-    id: '3',
-    title: 'Evaluación Técnica',
-    description: 'Completada por Javier Gomez (Puntaje: 92/100)',
-    time: 'Hace 4 horas',
-    user: { name: 'Javier Gomez', initials: 'JG' },
-    type: 'evaluation'
-  }
-];
-
-const INTERVIEWS: Interview[] = [
-  {
-    id: '1',
-    candidateName: 'Sofia Martínez',
-    candidateId: 'sm1',
-    position: 'Candidata a UX Lead',
-    time: '14:00 - 15:00',
-    type: 'video',
-    initials: 'SM',
-    status: 'confirmed'
-  },
-  {
-    id: '2',
-    candidateName: 'Daniel Rivera',
-    candidateId: 'dr1',
-    position: 'Candidato a DevOps',
-    time: '16:30 - 17:30',
-    type: 'in-person',
-    initials: 'DR',
-    status: 'pending'
-  }
-];
-
 export default function Dashboard() {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalCandidates: 0,
+    activeJobs: 24, // Mock for now
+    interviewsToday: 0
+  });
+  const [funnel, setFunnel] = useState([
+    { label: 'Postulación', count: 0, h: '0%', c: 'var(--primary)' },
+    { label: 'Preselección', count: 0, h: '0%', c: '#14B8A6' },
+    { label: 'Entrevista', count: 0, h: '0%', c: '#5EEAD4' },
+    { label: 'Evaluación', count: 0, h: '0%', c: '#CCFBF1' },
+    { label: 'Contratado', count: 0, h: '0%', c: 'var(--secondary)' }
+  ]);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      // 1. Total Candidates
+      const { count: totalCount } = await supabase
+        .from('candidates')
+        .select('*', { count: 'exact', head: true });
+
+      // 2. Funnel Data (Grouped by stage)
+      const { data: candidates } = await supabase
+        .from('candidates')
+        .select('stage');
+
+      const stageCounts = {
+        'Postulación': 0,
+        'Preselección': 0,
+        'Entrevista': 0,
+        'Evaluación': 0,
+        'Contratado': 0
+      };
+
+      candidates?.forEach(c => {
+        if (stageCounts.hasOwnProperty(c.stage)) {
+          stageCounts[c.stage as keyof typeof stageCounts]++;
+        }
+      });
+
+      const maxCount = Math.max(...Object.values(stageCounts), 1);
+      const newFunnel = funnel.map(f => ({
+        ...f,
+        count: stageCounts[f.label as keyof typeof stageCounts],
+        h: `${(stageCounts[f.label as keyof typeof stageCounts] / maxCount) * 100}%`
+      }));
+
+      // 3. Recent Activities (Mocking from candidates for now)
+      const { data: recentCandidates } = await supabase
+        .from('candidates')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      const activities: Activity[] = (recentCandidates || []).map(c => ({
+        id: c.id,
+        title: c.full_name,
+        description: `Se postuló para ${c.position}`,
+        time: new Date(c.created_at).toLocaleDateString(),
+        user: { name: c.full_name, initials: c.full_name[0] },
+        type: 'postulation'
+      }));
+
+      setStats({
+        totalCandidates: totalCount || 0,
+        activeJobs: 24,
+        interviewsToday: stageCounts['Entrevista']
+      });
+      setFunnel(newFunnel);
+      setRecentActivities(activities);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="content-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+        <Loader2 className="animate-spin" size={40} color="var(--primary)" />
+      </div>
+    );
+  }
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -82,9 +125,9 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="stats-container">
         {[
-          { label: 'Vacantes Activas', val: '24', change: '+12% vs mes anterior', icon: Briefcase, color: 'var(--primary)' },
-          { label: 'Total Candidatos', val: '1,284', change: '+48 nuevos', icon: Users, color: 'var(--secondary)' },
-          { label: 'Entrevistas Hoy', val: '8', change: 'Próxima en 45 min', icon: Calendar, color: '#F59E0B' }
+          { label: 'Vacantes Activas', val: stats.activeJobs, change: '+0% vs mes anterior', icon: Briefcase, color: 'var(--primary)' },
+          { label: 'Total Candidatos', val: stats.totalCandidates.toLocaleString(), change: 'Actualizado', icon: Users, color: 'var(--secondary)' },
+          { label: 'Entrevistas Hoy', val: stats.interviewsToday, change: 'Próxima pronto', icon: Calendar, color: '#F59E0B' }
         ].map((stat, i) => (
           <div key={i} className="stat-card">
             <div className="card-top">
@@ -112,16 +155,10 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="funnel-bars">
-          {[
-            { label: 'Postulación', count: 450, h: '100%', c: 'var(--primary)' },
-            { label: 'Preselección', count: 210, h: '75%', c: '#14B8A6' },
-            { label: 'Entrevista', count: 84, h: '50%', c: '#5EEAD4' },
-            { label: 'Evaluación', count: 32, h: '30%', c: '#CCFBF1' },
-            { label: 'Contratado', count: 12, h: '15%', c: 'var(--secondary)' }
-          ].map((bar, i) => (
+          {funnel.map((bar, i) => (
             <div key={i} className="funnel-bar-wrapper">
-              <div className="bar" style={{ height: bar.h, background: bar.c }}>
-                <span style={{ color: i > 2 ? 'var(--primary)' : 'white' }}>{bar.count}</span>
+              <div className="bar" style={{ height: bar.h || '10px', background: bar.c, minHeight: '10px' }}>
+                <span style={{ color: i > 2 ? 'var(--primary)' : 'white', display: bar.count > 0 ? 'block' : 'none' }}>{bar.count}</span>
               </div>
               <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>{bar.label}</p>
             </div>
@@ -136,54 +173,44 @@ export default function Dashboard() {
             <span style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>Ver todas</span>
           </div>
           <div className="activity-list">
-            {ACTIVITIES.map((act) => (
+            {recentActivities.length > 0 ? recentActivities.map((act) => (
               <div key={act.id} className="activity-item">
                 <div className="activity-left">
-                  {act.user.avatar ? (
-                    <img src={act.user.avatar} className="activity-avatar" alt="" />
-                  ) : (
-                    <div className="activity-avatar" style={{ background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
-                      {act.user.initials}
-                    </div>
-                  )}
+                  <div className="activity-avatar" style={{ background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                    {act.user.initials}
+                  </div>
                   <div className="activity-details">
                     <h5>{act.user.name}</h5>
                     <p>{act.description}</p>
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span className={`status-badge ${act.type === 'postulation' ? 'badge-primary' : 'badge-secondary'}`}>
-                    {act.type === 'postulation' ? 'Nueva Postulación' : act.type === 'interview' ? 'Entrevista' : 'Completado'}
+                  <span className={`status-badge badge-primary`}>
+                    Postulación
                   </span>
                   <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 700 }}>{act.time}</p>
                 </div>
               </div>
-            ))}
+            )) : (
+              <p style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)', fontSize: '14px' }}>No hay actividad reciente.</p>
+            )}
           </div>
         </div>
 
         <div className="interviews-card">
-           <h4 style={{ fontWeight: 800, marginBottom: '24px' }}>Próximas Entrevistas</h4>
-           <div className="interview-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-             {INTERVIEWS.map(int => (
-               <div key={int.id} style={{ padding: '16px', borderRadius: '12px', background: 'var(--surface)', borderLeft: `4px solid ${int.status === 'confirmed' ? 'var(--secondary)' : 'var(--primary)'}` }}>
-                 <p style={{ fontSize: '10px', fontWeight: 800, color: int.status === 'confirmed' ? 'var(--secondary)' : 'var(--primary)', marginBottom: '4px' }}>{int.time}</p>
-                 <h6 style={{ fontWeight: 700, fontSize: '14px' }}>{int.candidateName}</h6>
-                 <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{int.position}</p>
-               </div>
-             ))}
-           </div>
-           
-           <div style={{ marginTop: '24px', padding: '20px', background: 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)', borderRadius: '16px', border: '1px solid #C7D2FE' }}>
+           <h4 style={{ fontWeight: 800, marginBottom: '24px' }}>Insights del Día</h4>
+           <div style={{ padding: '20px', background: 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)', borderRadius: '16px', border: '1px solid #C7D2FE' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4F46E5', marginBottom: '8px' }}>
-                <Sparkles size={16} />
-                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase' }}>TalentHub Insights</span>
+                <Sparkles size={18} />
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase' }}>TalentHub Inteligencia</span>
               </div>
-              <p style={{ fontSize: '12px', color: '#1E1B4B', lineHeight: '1.5' }}>
-                Tienes <strong>3 perfiles</strong> con alta compatibilidad para Frontend Senior.
+              <p style={{ fontSize: '13px', color: '#1E1B4B', lineHeight: '1.5', fontWeight: 500 }}>
+                {stats.totalCandidates === 0 
+                  ? 'Aún no tienes candidatos registrados. ¡Empieza a contratar hoy mismo!'
+                  : `Tienes ${stats.totalCandidates} candidatos en proceso. Revisa las evaluaciones pendientes.`}
               </p>
-              <button style={{ marginTop: '12px', width: '100%', padding: '10px', background: 'white', border: '1px solid #C7D2FE', borderRadius: '10px', fontSize: '11px', fontWeight: 700, color: '#4F46E5', cursor: 'pointer' }}>
-                Ver Sugerencias
+              <button style={{ marginTop: '16px', width: '100%', padding: '12px', background: 'white', border: '1px solid #C7D2FE', borderRadius: '10px', fontSize: '12px', fontWeight: 700, color: '#4F46E5', cursor: 'pointer', transition: 'all 0.2s' }}>
+                Generar Reporte IA
               </button>
            </div>
         </div>
