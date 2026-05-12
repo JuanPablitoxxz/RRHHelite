@@ -46,31 +46,38 @@ export default function App() {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
+    console.log('Fetching role for user:', userId);
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', userId)
-        .single();
+        .maybeSingle(); // Usamos maybeSingle para evitar el error de 'no existe'
       
       if (error) {
-        console.warn('Profile not found, defaulting to user role');
+        console.error('Database error fetching role:', error);
         setUserRole('user');
-        setCurrentView('jobs');
         return;
       }
 
       if (data) {
-        setUserRole(data.role);
-        if (data.role === 'user' || data.role === 'applicant') {
-          setCurrentView('jobs');
-        } else {
+        console.log('Role found:', data.role);
+        setUserRole(data.role as UserRole);
+        
+        // Redirección forzada según el rol
+        if (data.role === 'admin' || data.role === 'interviewer') {
           setCurrentView('dashboard');
+        } else {
+          setCurrentView('jobs');
         }
+      } else {
+        console.warn('No profile found for user, using default role');
+        setUserRole('user');
+        setCurrentView('jobs');
       }
     } catch (err) {
-      console.error('Error fetching role:', err);
-      setUserRole('user'); // Fallback
+      console.error('Fatal error fetching role:', err);
+      setUserRole('user');
     }
   };
 
