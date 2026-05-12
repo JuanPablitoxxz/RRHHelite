@@ -16,14 +16,10 @@ DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
 CREATE POLICY "Users can view their own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 
 DROP POLICY IF EXISTS "Admins can view all profiles" ON profiles;
-CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can view all profiles" ON profiles FOR SELECT TO authenticated USING (true);
 
 DROP POLICY IF EXISTS "Admins can update profiles" ON profiles;
-CREATE POLICY "Admins can update profiles" ON profiles FOR UPDATE TO authenticated USING (
-    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can update profiles" ON profiles FOR UPDATE TO authenticated USING (true);
 
 -- FUNCION Y TRIGGER PARA CREAR PERFIL AUTOMATICAMENTE AL REGISTRARSE
 CREATE OR REPLACE FUNCTION public.handle_new_user()
