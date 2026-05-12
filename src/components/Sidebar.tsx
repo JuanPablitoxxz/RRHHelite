@@ -5,10 +5,10 @@ import {
   Calendar, 
   FileText, 
   Settings, 
-  Settings, 
   LogOut,
   Target,
-  Shield
+  Shield,
+  MessageSquare
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { View, UserRole } from '../types';
