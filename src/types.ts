@@ -35,3 +35,14 @@ export interface Interview {
   initials: string;
   status: 'confirmed' | 'pending' | 'completed';
 }
+
+export interface Job {
+  id: string;
+  title: string;
+  department: string;
+  location: string;
+  type: string;
+  status: 'Abierta' | 'Cerrada' | 'En Pausa';
+  description?: string;
+  created_at: string;
+}
