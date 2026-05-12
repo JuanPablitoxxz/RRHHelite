@@ -26,7 +26,7 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
   INSERT INTO public.profiles (id, email, full_name, role)
-  VALUES (new.id, new.email, new.raw_user_metadata->>'full_name', 'admin'); -- El primero será admin por defecto en este demo, o 'user' según prefieras
+  VALUES (new.id, new.email, COALESCE(new.raw_user_meta_data->>'full_name', 'Usuario'), 'user');
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
