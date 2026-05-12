@@ -57,6 +57,13 @@ export default function App() {
       return;
     }
 
+    // 2. Hardcoded interviewer fallback
+    if (userEmail === 'entrevistador@gmail.com' || userEmail === 'entrevistador@rrhh.com') {
+      setUserRole('interviewer');
+      setCurrentView('dashboard');
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('profiles')
