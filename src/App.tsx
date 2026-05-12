@@ -3,17 +3,50 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { supabase } from './lib/supabase';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import Dashboard from './views/Dashboard';
 import CandidatesList from './views/CandidatesList';
 import CandidateDetail from './views/CandidateDetail';
+import Auth from './views/Auth';
 import { View } from './types';
+import { Session } from '@supabase/supabase-js';
 
 export default function App() {
+  const [session, setSession] = useState<Session | null>(null);
   const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8FAFC' }}>
+        <div style={{ width: '40px', height: '40px', border: '4px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Auth />;
+  }
 
   return (
     <div className="app-container">
@@ -30,7 +63,7 @@ export default function App() {
           {/* Fallback for other menu items in this demo */}
           {(currentView === 'jobs' || currentView === 'interviews' || currentView === 'evaluations') && (
             <div className="content-area">
-              <div style={{ display: 'flex', flexDirection: 'column', items: 'center', justifyContent: 'center', py: '100px', textAlign: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px 0', textAlign: 'center' }}>
                 <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '16px' }}>Próximamente</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Esta sección está en desarrollo. Selecciona Dashboard o Candidatos.</p>
                 <button 

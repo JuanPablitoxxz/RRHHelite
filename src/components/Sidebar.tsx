@@ -8,6 +8,7 @@ import {
   LogOut,
   Plus
 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { View } from '../types';
 
 interface SidebarProps {
@@ -59,7 +60,11 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
             <Settings size={20} />
             Configuración
           </button>
-          <button className="nav-link" style={{ color: '#EF4444' }}>
+          <button 
+            onClick={() => supabase.auth.signOut()}
+            className="nav-link" 
+            style={{ color: '#EF4444' }}
+          >
             <LogOut size={20} />
             Cerrar Sesión
           </button>
