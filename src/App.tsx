@@ -116,12 +116,12 @@ export default function App() {
       <Sidebar currentView={currentView} onNavigate={handleNavigate} userRole={userRole} />
       
       <div className="main-wrapper">
-        <Header user={session.user} />
+        <Header user={session.user} userRole={userRole} />
         
         <main>
           {currentView === 'dashboard' && <Dashboard />}
           {currentView === 'candidates' && <CandidatesList onSelectCandidate={handleNavigate} />}
-          {currentView === 'jobs' && <JobsList />}
+          {currentView === 'jobs' && <JobsList userRole={userRole} userEmail={session.user.email || ''} userName={session.user.user_metadata?.full_name || ''} />}
           {currentView === 'interviews' && <InterviewsList />}
           {currentView === 'detail' && <CandidateDetail candidateId={selectedCandidateId} onBack={() => setCurrentView('candidates')} />}
           

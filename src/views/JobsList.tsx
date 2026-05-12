@@ -17,9 +17,15 @@ import {
   Trash2,
   X
 } from 'lucide-react';
-import { Job } from '../types';
+import { Job, UserRole } from '../types';
 
-export default function JobsList() {
+interface JobsListProps {
+  userRole?: UserRole | string;
+  userEmail?: string;
+  userName?: string;
+}
+
+export default function JobsList({ userRole = 'admin', userEmail = '', userName = '' }: JobsListProps) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,6 +42,11 @@ export default function JobsList() {
     status: 'Abierta' as 'Abierta' | 'Cerrada' | 'En Pausa',
     description: ''
   });
+
+  // Apply form state
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [applyPhone, setApplyPhone] = useState('');
 
   useEffect(() => {
     fetchJobs();
@@ -117,6 +128,31 @@ export default function JobsList() {
     }
   };
 
+  const handleApply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedJob) return;
+
+    try {
+      const { error } = await supabase
+        .from('candidates')
+        .insert([{
+          full_name: userName || 'Usuario',
+          email: userEmail || 'user@example.com',
+          phone: applyPhone,
+          position: selectedJob.title,
+          stage: 'Postulación'
+        }]);
+
+      if (error) throw error;
+      alert('¡Aplicación enviada con éxito! Revisa la sección de Entrevistas pronto.');
+      setIsApplyModalOpen(false);
+      setApplyPhone('');
+    } catch (error) {
+      console.error('Error applying to job:', error);
+      alert('Hubo un error al enviar tu aplicación. Intenta nuevamente.');
+    }
+  };
+
   const filteredJobs = jobs.filter(j => 
     j.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     j.department.toLowerCase().includes(searchTerm.toLowerCase())
@@ -139,12 +175,19 @@ export default function JobsList() {
       <div className="page-title-section">
         <div>
           <h2>Gestión de Vacantes</h2>
-          <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Publica y administra las oportunidades laborales de tu empresa</p>
+          <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>
+            {userRole === 'user' || userRole === 'applicant' 
+              ? 'Explora nuestras oportunidades laborales y postúlate.' 
+              : 'Publica y administra las oportunidades laborales de tu empresa'
+            }
+          </p>
         </div>
-        <button onClick={handleOpenCreate} className="new-job-btn">
-          <Plus size={20} />
-          Nueva Vacante
-        </button>
+        {(userRole === 'admin' || userRole === 'interviewer') && (
+          <button onClick={handleOpenCreate} className="new-job-btn">
+            <Plus size={20} />
+            Nueva Vacante
+          </button>
+        )}
       </div>
 
       <div style={{ marginBottom: '24px' }}>
@@ -167,30 +210,34 @@ export default function JobsList() {
                 <Briefcase size={24} />
               </div>
               <div style={{ position: 'relative' }}>
-                <button 
-                  onClick={() => setActiveMenu(activeMenu === job.id ? null : job.id)}
-                  style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '4px' }}
-                >
-                  <MoreVertical size={20} />
-                </button>
-                
-                <AnimatePresence>
-                  {activeMenu === job.id && (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                      style={{ position: 'absolute', right: 0, top: '32px', background: 'white', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: 'var(--shadow)', zIndex: 10, width: '160px', overflow: 'hidden' }}
+                {(userRole === 'admin' || userRole === 'interviewer') && (
+                  <>
+                    <button 
+                      onClick={() => setActiveMenu(activeMenu === job.id ? null : job.id)}
+                      style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: '4px' }}
                     >
-                      <button onClick={() => handleOpenEdit(job)} style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                        <Edit2 size={14} /> Editar
-                      </button>
-                      <button onClick={() => handleDeleteJob(job.id)} style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 600, color: '#EF4444', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', borderTop: '1px solid var(--border)' }}>
-                        <Trash2 size={14} /> Eliminar
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      <MoreVertical size={20} />
+                    </button>
+                    
+                    <AnimatePresence>
+                      {activeMenu === job.id && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                          style={{ position: 'absolute', right: 0, top: '32px', background: 'white', border: '1px solid var(--border)', borderRadius: '12px', boxShadow: 'var(--shadow)', zIndex: 10, width: '160px', overflow: 'hidden' }}
+                        >
+                          <button onClick={() => handleOpenEdit(job)} style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 600, color: 'var(--text-main)', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                            <Edit2 size={14} /> Editar
+                          </button>
+                          <button onClick={() => handleDeleteJob(job.id)} style={{ width: '100%', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: 600, color: '#EF4444', border: 'none', background: 'none', cursor: 'pointer', textAlign: 'left', borderTop: '1px solid var(--border)' }}>
+                            <Trash2 size={14} /> Eliminar
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
+                )}
               </div>
             </div>
             
@@ -215,9 +262,20 @@ export default function JobsList() {
                   {job.status}
                 </span>
               </div>
-              <button className="secondary-btn" style={{ padding: '8px 16px', fontSize: '12px' }}>
-                Ver Candidatos
-              </button>
+              {(userRole === 'admin' || userRole === 'interviewer') ? (
+                <button className="secondary-btn" style={{ padding: '8px 16px', fontSize: '12px' }}>
+                  Ver Candidatos
+                </button>
+              ) : (
+                <button 
+                  onClick={() => { setSelectedJob(job); setIsApplyModalOpen(true); }}
+                  className="primary-btn" 
+                  style={{ padding: '8px 16px', fontSize: '12px' }}
+                  disabled={job.status !== 'Abierta'}
+                >
+                  Postularme
+                </button>
+              )}
             </div>
           </div>
         )) : (
@@ -325,6 +383,68 @@ export default function JobsList() {
           </motion.div>
         </div>
       )}
+
+      {/* Modal para Aplicar (Usuario) */}
+      <AnimatePresence>
+        {isApplyModalOpen && selectedJob && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              style={{ background: 'white', borderRadius: '24px', padding: '32px', width: '100%', maxWidth: '500px', boxShadow: 'var(--shadow-lg)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-main)' }}>Postular a: {selectedJob.title}</h3>
+                <button onClick={() => setIsApplyModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleApply} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Nombre Completo</label>
+                  <input type="text" value={userName || 'Usuario'} disabled className="auth-input" style={{ opacity: 0.7 }} />
+                </div>
+                
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Correo Electrónico</label>
+                  <input type="text" value={userEmail || ''} disabled className="auth-input" style={{ opacity: 0.7 }} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Teléfono</label>
+                  <input 
+                    type="tel" 
+                    value={applyPhone}
+                    onChange={(e) => setApplyPhone(e.target.value)}
+                    required
+                    placeholder="+57 300 000 0000"
+                    className="auth-input" 
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Hoja de Vida (CV)</label>
+                  <div style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '24px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Para esta demo, no es necesario subir un archivo real.</p>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="secondary-btn" style={{ flex: 1, padding: '14px', justifyContent: 'center' }}>Cancelar</button>
+                  <button type="submit" className="primary-btn" style={{ flex: 2, padding: '14px', justifyContent: 'center' }}>Enviar Aplicación</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

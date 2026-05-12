@@ -3,12 +3,20 @@ import { User } from '@supabase/supabase-js';
 
 interface HeaderProps {
   user: User;
+  userRole?: string;
 }
 
-export default function Header({ user }: HeaderProps) {
+const roleMap: Record<string, string> = {
+  admin: 'Administrador RRHH',
+  interviewer: 'Entrevistador',
+  user: 'Usuario',
+  applicant: 'Aspirante'
+};
+
+export default function Header({ user, userRole = 'user' }: HeaderProps) {
   // Get name from user_metadata or fallback to email
   const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
-  const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+  const initials = fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase();
 
   return (
     <header className="header">
@@ -24,7 +32,7 @@ export default function Header({ user }: HeaderProps) {
         </div>
         <div style={{ textAlign: 'right', marginRight: '12px' }}>
           <p style={{ fontSize: '13px', fontWeight: '700', color: '#1E293B', textTransform: 'capitalize' }}>{fullName}</p>
-          <p style={{ fontSize: '11px', fontWeight: '600', color: '#64748B' }}>Administrador RRHH</p>
+          <p style={{ fontSize: '11px', fontWeight: '600', color: '#64748B' }}>{roleMap[userRole] || 'Usuario'}</p>
         </div>
         {user.user_metadata?.avatar_url ? (
           <img 
