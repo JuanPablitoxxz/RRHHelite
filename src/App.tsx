@@ -13,6 +13,8 @@ import CandidatesList from './views/CandidatesList';
 import CandidateDetail from './views/CandidateDetail';
 import JobsList from './views/JobsList';
 import InterviewsList from './views/InterviewsList';
+import EvaluationsList from './views/EvaluationsList';
+import Settings from './views/Settings';
 import Auth from './views/Auth';
 import { View } from './types';
 import { Session } from '@supabase/supabase-js';
@@ -122,22 +124,8 @@ export default function App() {
           {currentView === 'interviews' && <InterviewsList />}
           {currentView === 'detail' && <CandidateDetail candidateId={selectedCandidateId} onBack={() => setCurrentView('candidates')} />}
           
-          {/* Fallback for other menu items in this demo */}
-          {currentView === 'evaluations' && (
-            <div className="content-area">
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px 0', textAlign: 'center' }}>
-                <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '16px' }}>Próximamente</h3>
-                <p style={{ color: 'var(--text-muted)' }}>Esta sección está en desarrollo. Selecciona Dashboard o Candidatos.</p>
-                <button 
-                  onClick={() => setCurrentView('dashboard')}
-                  className="new-job-btn"
-                  style={{ marginTop: '24px', marginInline: 'auto' }}
-                >
-                  Volver al Dashboard
-                </button>
-              </div>
-            </div>
-          )}
+          {currentView === 'evaluations' && <EvaluationsList />}
+          {currentView === 'settings' && <Settings />}
         </main>
       </div>
     </div>

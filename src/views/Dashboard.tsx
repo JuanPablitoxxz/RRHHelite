@@ -40,7 +40,19 @@ export default function Dashboard() {
         .from('candidates')
         .select('*', { count: 'exact', head: true });
 
-      // 2. Funnel Data (Grouped by stage)
+      // 2. Active Jobs
+      const { count: activeJobsCount } = await supabase
+        .from('jobs')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Abierta');
+
+      // 3. Interviews Today/Pending
+      const { count: pendingInterviews } = await supabase
+        .from('interviews')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'Pendiente');
+
+      // 4. Funnel Data (Grouped by stage)
       const { data: candidates } = await supabase
         .from('candidates')
         .select('stage');
@@ -66,7 +78,7 @@ export default function Dashboard() {
         h: `${(stageCounts[f.label as keyof typeof stageCounts] / maxCount) * 100}%`
       }));
 
-      // 3. Recent Activities (Mocking from candidates for now)
+      // 5. Recent Activities
       const { data: recentCandidates } = await supabase
         .from('candidates')
         .select('*')
@@ -84,8 +96,8 @@ export default function Dashboard() {
 
       setStats({
         totalCandidates: totalCount || 0,
-        activeJobs: 24,
-        interviewsToday: stageCounts['Entrevista']
+        activeJobs: activeJobsCount || 0,
+        interviewsToday: pendingInterviews || 0
       });
       setFunnel(newFunnel);
       setRecentActivities(activities);
