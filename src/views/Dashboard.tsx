@@ -3,7 +3,6 @@ import {
   Users, 
   Briefcase, 
   Calendar, 
-  TrendingUp, 
   ChevronRight, 
   Video, 
   MapPin, 
@@ -23,19 +22,19 @@ const ACTIVITIES: Activity[] = [
   },
   {
     id: '2',
-    title: 'Evaluación Técnica',
-    description: 'Completada por Javier Gomez (Puntaje: 92/100)',
+    title: 'Lucas Varela',
+    description: 'Entrevista agendada con Equipo Técnico',
     time: 'Hace 2 horas',
-    user: { name: 'Javier Gomez', initials: 'JG' },
-    type: 'evaluation'
+    user: { name: 'Lucas Varela', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100' },
+    type: 'interview'
   },
   {
     id: '3',
-    title: 'Lucas Varela',
-    description: 'Entrevista agendada con Equipo Técnico',
+    title: 'Evaluación Técnica',
+    description: 'Completada por Javier Gomez (Puntaje: 92/100)',
     time: 'Hace 4 horas',
-    user: { name: 'Lucas Varela', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100' },
-    type: 'interview'
+    user: { name: 'Javier Gomez', initials: 'JG' },
+    type: 'evaluation'
   }
 ];
 
@@ -65,155 +64,128 @@ const INTERVIEWS: Interview[] = [
 export default function Dashboard() {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="content-area"
     >
-      <div className="flex items-center justify-between">
+      <div className="page-title-section">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Panel de Control</h2>
-          <p className="text-slate-500 font-medium">Bienvenido de nuevo, revisa el progreso de tus procesos hoy.</p>
+          <h2>Panel de Control</h2>
+          <p style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Bienvenido de nuevo, revisa el progreso de tus procesos hoy.</p>
         </div>
-        <button className="secondary-btn shadow-sm">
+        <button className="new-job-btn" style={{ padding: '12px 24px', background: 'var(--secondary)' }}>
           <UserPlus size={20} />
           Crear Candidato
         </button>
       </div>
 
-      {/* Stats Bento Grid */}
-      <div className="stats-grid">
+      {/* Stats */}
+      <div className="stats-container">
         {[
-          { label: 'Vacantes Activas', val: '24', change: '+12%', icon: Briefcase, color: '#0D9488' },
-          { label: 'Total Candidatos', val: '1,284', change: '+48', icon: Users, color: '#6366F1' },
-          { label: 'Entrevistas Hoy', val: '8', change: 'En 45 min', icon: Calendar, color: '#F59E0B' }
+          { label: 'Vacantes Activas', val: '24', change: '+12% vs mes anterior', icon: Briefcase, color: 'var(--primary)' },
+          { label: 'Total Candidatos', val: '1,284', change: '+48 nuevos', icon: Users, color: 'var(--secondary)' },
+          { label: 'Entrevistas Hoy', val: '8', change: 'Próxima en 45 min', icon: Calendar, color: '#F59E0B' }
         ].map((stat, i) => (
-          <motion.div 
-            key={i}
-            whileHover={{ y: -4 }}
-            className="dashboard-card"
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ color: stat.color }}>
-                <stat.icon size={24} />
+          <div key={i} className="stat-card">
+            <div className="card-top">
+              <div className="icon-box" style={{ background: `${stat.color}15`, color: stat.color }}>
+                <stat.icon size={26} />
               </div>
-              <span style={{ fontSize: '12px', fontWeight: 'bold', color: stat.color }}>{stat.change}</span>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: stat.color, background: `${stat.color}10`, padding: '4px 10px', borderRadius: '20px' }}>
+                {stat.change}
+              </span>
             </div>
-            <p className="stat-label">{stat.label}</p>
-            <h3 className="stat-val">{stat.val}</h3>
-          </motion.div>
+            <div className="stat-info">
+              <p className="label">{stat.label}</p>
+              <h3 className="value">{stat.val}</h3>
+            </div>
+          </div>
         ))}
       </div>
 
-      {/* Recruitment Funnel */}
-      <div className="dashboard-card">
-        <div className="flex items-center justify-between mb-10">
-          <h4 className="text-xl font-bold text-slate-900">Embudo de Reclutamiento</h4>
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors">
-            Global
-            <ChevronRight size={16} className="rotate-90" />
+      {/* Funnel */}
+      <div className="funnel-card">
+        <div className="funnel-header">
+          <h4 style={{ fontSize: '18px', fontWeight: 800 }}>Embudo de Reclutamiento</h4>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 700, color: 'var(--text-muted)' }}>
+            Global <ChevronRight size={16} style={{ transform: 'rotate(90deg)' }} />
           </div>
         </div>
-        <div className="flex items-end justify-between gap-1 h-48">
+        <div className="funnel-bars">
           {[
-            { label: 'Postulación', count: 450, color: 'bg-primary', height: '100%' },
-            { label: 'Preselección', count: 210, color: 'bg-primary/80', height: '75%' },
-            { label: 'Entrevista', count: 84, countColor: 'text-white', color: 'bg-primary/60', height: '50%' },
-            { label: 'Evaluación', count: 32, countColor: 'text-slate-900', color: 'bg-primary/30', height: '30%' },
-            { label: 'Contratado', count: 12, countColor: 'text-white', color: 'bg-secondary', height: '15%' }
-          ].map((stage, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center group h-full justify-end">
-              <motion.div 
-                initial={{ height: 0 }}
-                animate={{ height: stage.height }}
-                className={`w-full ${stage.color} rounded-t-2xl flex items-center justify-center relative overflow-hidden group-hover:brightness-110 transition-all`}
-              >
-                <span className={`font-bold text-lg z-10 ${stage.countColor || 'text-white'}`}>{stage.count}</span>
-              </motion.div>
-              <p className="mt-4 text-xs font-bold text-slate-500 text-center">{stage.label}</p>
+            { label: 'Postulación', count: 450, h: '100%', c: 'var(--primary)' },
+            { label: 'Preselección', count: 210, h: '75%', c: '#14B8A6' },
+            { label: 'Entrevista', count: 84, h: '50%', c: '#5EEAD4' },
+            { label: 'Evaluación', count: 32, h: '30%', c: '#CCFBF1' },
+            { label: 'Contratado', count: 12, h: '15%', c: 'var(--secondary)' }
+          ].map((bar, i) => (
+            <div key={i} className="funnel-bar-wrapper">
+              <div className="bar" style={{ height: bar.h, background: bar.c }}>
+                <span style={{ color: i > 2 ? 'var(--primary)' : 'white' }}>{bar.count}</span>
+              </div>
+              <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>{bar.label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Activity */}
-        <div className="lg:col-span-2 dashboard-card !p-0 overflow-hidden">
-          <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-            <h4 className="text-lg font-bold text-slate-900">Actividad Reciente</h4>
-            <button className="text-sm font-bold text-primary hover:underline transition-all">Ver todas</button>
+      <div className="dashboard-bottom">
+        <div className="activity-card">
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+            <h4 style={{ fontWeight: 800 }}>Actividad Reciente</h4>
+            <span style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>Ver todas</span>
           </div>
-          <div className="divide-y divide-slate-50">
-            {ACTIVITIES.map((activity) => (
-              <div key={activity.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-                <div className="flex items-center gap-4">
-                  {activity.user.avatar ? (
-                    <img src={activity.user.avatar} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+          <div className="activity-list">
+            {ACTIVITIES.map((act) => (
+              <div key={act.id} className="activity-item">
+                <div className="activity-left">
+                  {act.user.avatar ? (
+                    <img src={act.user.avatar} className="activity-avatar" alt="" />
                   ) : (
-                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold border-2 border-white shadow-sm">
-                      {activity.user.initials}
+                    <div className="activity-avatar" style={{ background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                      {act.user.initials}
                     </div>
                   )}
-                  <div>
-                    <h5 className="font-bold text-slate-900 leading-tight">{activity.title}</h5>
-                    <p className="text-sm text-slate-500 font-medium">
-                      {activity.description.includes('UX Lead') ? (
-                        <>Aplicó para <span className="text-secondary font-bold">UX Lead</span></>
-                      ) : activity.description}
-                    </p>
+                  <div className="activity-details">
+                    <h5>{act.user.name}</h5>
+                    <p>{act.description}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
-                    activity.type === 'postulation' ? 'bg-primary/10 text-primary' :
-                    activity.type === 'interview' ? 'bg-secondary/10 text-secondary' :
-                    activity.type === 'evaluation' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'
-                  }`}>
-                    {activity.type === 'postulation' ? 'Nueva Postulación' :
-                     activity.type === 'interview' ? 'Entrevista' :
-                     activity.type === 'evaluation' ? 'Completado' : 'Sistema'}
+                <div style={{ textAlign: 'right' }}>
+                  <span className={`status-badge ${act.type === 'postulation' ? 'badge-primary' : 'badge-secondary'}`}>
+                    {act.type === 'postulation' ? 'Nueva Postulación' : act.type === 'interview' ? 'Entrevista' : 'Completado'}
                   </span>
-                  <p className="text-[10px] font-bold text-slate-400 mt-1.5 uppercase tracking-tighter opacity-70">{activity.time}</p>
+                  <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 700 }}>{act.time}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Upcoming Interviews */}
-        <div className="space-y-6">
-          <div className="dashboard-card">
-            <h4 className="text-lg font-bold text-slate-900 mb-6 underline decoration-primary/20 underline-offset-8">Próximas Entrevistas</h4>
-            <div className="space-y-4">
-              {INTERVIEWS.map((interview) => (
-                <div key={interview.id} className={`p-4 rounded-2xl border-l-4 ${interview.status === 'confirmed' ? 'border-secondary bg-secondary/5' : 'border-primary bg-primary/5'} shadow-sm`}>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className={`text-[10px] font-extrabold uppercase tracking-widest ${interview.status === 'confirmed' ? 'text-secondary' : 'text-primary'}`}>
-                      {interview.time}
-                    </span>
-                    {interview.type === 'video' ? <Video size={14} className="text-slate-400" /> : <MapPin size={14} className="text-slate-400" />}
-                  </div>
-                  <h6 className="font-bold text-slate-900">{interview.candidateName}</h6>
-                  <p className="text-xs font-medium text-slate-500">{interview.position}</p>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-8 p-5 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-indigo-100/50 border border-indigo-100/50 relative overflow-hidden group transition-all hover:shadow-lg hover:shadow-indigo-50">
-              <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:scale-110 transition-transform">
-                <Sparkles size={40} className="text-indigo-600" />
+        <div className="interviews-card">
+           <h4 style={{ fontWeight: 800, marginBottom: '24px' }}>Próximas Entrevistas</h4>
+           <div className="interview-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+             {INTERVIEWS.map(int => (
+               <div key={int.id} style={{ padding: '16px', borderRadius: '12px', background: 'var(--surface)', borderLeft: `4px solid ${int.status === 'confirmed' ? 'var(--secondary)' : 'var(--primary)'}` }}>
+                 <p style={{ fontSize: '10px', fontWeight: 800, color: int.status === 'confirmed' ? 'var(--secondary)' : 'var(--primary)', marginBottom: '4px' }}>{int.time}</p>
+                 <h6 style={{ fontWeight: 700, fontSize: '14px' }}>{int.candidateName}</h6>
+                 <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{int.position}</p>
+               </div>
+             ))}
+           </div>
+           
+           <div style={{ marginTop: '24px', padding: '20px', background: 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)', borderRadius: '16px', border: '1px solid #C7D2FE' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4F46E5', marginBottom: '8px' }}>
+                <Sparkles size={16} />
+                <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase' }}>TalentHub Insights</span>
               </div>
-              <div className="flex items-center gap-2 mb-2 text-indigo-600">
-                <Sparkles size={18} />
-                <h6 className="text-xs font-bold uppercase tracking-wider">TalentFlow Insights</h6>
-              </div>
-              <p className="text-xs text-indigo-900 leading-relaxed font-medium">
-                Tienes <strong className="text-indigo-600">3 perfiles</strong> con alta compatibilidad para la vacante de Frontend Senior. ¡Revísalos ahora!
+              <p style={{ fontSize: '12px', color: '#1E1B4B', lineHeight: '1.5' }}>
+                Tienes <strong>3 perfiles</strong> con alta compatibilidad para Frontend Senior.
               </p>
-              <button className="mt-4 w-full py-2.5 bg-white text-indigo-600 text-xs font-bold rounded-xl border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+              <button style={{ marginTop: '12px', width: '100%', padding: '10px', background: 'white', border: '1px solid #C7D2FE', borderRadius: '10px', fontSize: '11px', fontWeight: 700, color: '#4F46E5', cursor: 'pointer' }}>
                 Ver Sugerencias
               </button>
-            </div>
-          </div>
+           </div>
         </div>
       </div>
     </motion.div>

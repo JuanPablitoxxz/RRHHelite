@@ -26,9 +26,9 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">
+      <div className="logo-section">
         <h1>TalentFlow</h1>
-        <p style={{ fontSize: '10px', opacity: 0.6 }}>Recruitement Suite</p>
+        <p>Recruitement Suite</p>
       </div>
 
       <nav className="nav-menu">
@@ -39,7 +39,7 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
             <button
               key={item.id}
               onClick={() => onNavigate(item.id as View)}
-              className={`nav-item ${isActive ? 'active' : ''}`}
+              className={`nav-link ${isActive ? 'active' : ''}`}
             >
               <Icon size={20} />
               {item.label}
@@ -48,19 +48,19 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
         })}
       </nav>
 
-      <div className="px-4 mt-auto space-y-4">
-        <button className="primary-btn w-full justify-center py-3 shadow-lg shadow-primary/10">
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <button className="new-job-btn">
           <Plus size={20} />
           Nueva Vacante
         </button>
 
-        <div className="pt-4 border-t border-slate-200 space-y-1">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-all">
-            <Settings size={20} className="text-slate-400" />
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '16px' }}>
+          <button className="nav-link">
+            <Settings size={20} />
             Configuración
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all">
-            <LogOut size={20} className="text-slate-400" />
+          <button className="nav-link" style={{ color: '#EF4444' }}>
+            <LogOut size={20} />
             Cerrar Sesión
           </button>
         </div>

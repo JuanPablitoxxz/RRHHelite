@@ -19,32 +19,30 @@ export default function App() {
     <div className="app-container">
       <Sidebar currentView={currentView} onNavigate={setCurrentView} />
       
-      <div className="main-content">
+      <div className="main-wrapper">
         <Header />
         
-        <main className="flex-1 p-6 lg:p-10">
-          <div className="max-w-[1600px] mx-auto">
-            {currentView === 'dashboard' && <Dashboard />}
-            {currentView === 'candidates' && <CandidatesList onSelectCandidate={setCurrentView} />}
-            {currentView === 'detail' && <CandidateDetail />}
-            
-            {/* Fallback for other menu items in this demo */}
-            {(currentView === 'jobs' || currentView === 'interviews' || currentView === 'evaluations') && (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-6 text-slate-400">
-                   <span className="text-4xl font-bold">!</span>
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Próximamente</h3>
-                <p className="text-slate-500 max-w-xs">Esta sección está en desarrollo. Selecciona Dashboard o Candidatos para ver los avances actuales.</p>
+        <main>
+          {currentView === 'dashboard' && <Dashboard />}
+          {currentView === 'candidates' && <CandidatesList onSelectCandidate={setCurrentView} />}
+          {currentView === 'detail' && <CandidateDetail />}
+          
+          {/* Fallback for other menu items in this demo */}
+          {(currentView === 'jobs' || currentView === 'interviews' || currentView === 'evaluations') && (
+            <div className="content-area">
+              <div style={{ display: 'flex', flexDirection: 'column', items: 'center', justifyContent: 'center', py: '100px', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '16px' }}>Próximamente</h3>
+                <p style={{ color: 'var(--text-muted)' }}>Esta sección está en desarrollo. Selecciona Dashboard o Candidatos.</p>
                 <button 
                   onClick={() => setCurrentView('dashboard')}
-                  className="mt-8 primary-btn"
+                  className="new-job-btn"
+                  style={{ marginTop: '24px', marginInline: 'auto' }}
                 >
                   Volver al Dashboard
                 </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -52,4 +50,3 @@ export default function App() {
     </div>
   );
 }
-
