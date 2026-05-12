@@ -16,6 +16,7 @@ import InterviewsList from './views/InterviewsList';
 import EvaluationsList from './views/EvaluationsList';
 import UsersList from './views/UsersList';
 import Settings from './views/Settings';
+import ChatView from './views/ChatView';
 import Auth from './views/Auth';
 import { View } from './types';
 import { Session } from '@supabase/supabase-js';
@@ -126,6 +127,7 @@ export default function App() {
           {currentView === 'detail' && <CandidateDetail candidateId={selectedCandidateId} onBack={() => setCurrentView('candidates')} userEmail={session.user.email || ''} />}
           
           {currentView === 'evaluations' && <EvaluationsList userRole={userRole} userEmail={session.user.email || ''} userName={session.user.user_metadata?.full_name || ''} />}
+          {currentView === 'chat' && <ChatView userEmail={session.user.email || ''} userRole={userRole} />}
           {currentView === 'users' && <UsersList />}
           {currentView === 'settings' && <Settings />}
         </main>

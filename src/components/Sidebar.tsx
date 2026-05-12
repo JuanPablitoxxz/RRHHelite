@@ -30,6 +30,7 @@ export default function Sidebar({ currentView, onNavigate, userRole }: SidebarPr
     { id: 'jobs', icon: Briefcase, label: 'Vacantes', roles: ['admin', 'interviewer', 'user', 'applicant'] },
     { id: 'interviews', icon: Calendar, label: 'Entrevistas', roles: ['admin', 'interviewer', 'applicant'] },
     { id: 'evaluations', icon: FileText, label: 'Evaluaciones', roles: ['admin', 'interviewer', 'applicant'] },
+    { id: 'chat', icon: MessageSquare, label: 'Chat', roles: ['admin', 'interviewer', 'applicant'] },
     { id: 'users', icon: Shield, label: 'Usuarios', roles: ['admin'] },
     { id: 'settings', icon: Settings, label: 'Ajustes', roles: ['admin'] },
   ];
