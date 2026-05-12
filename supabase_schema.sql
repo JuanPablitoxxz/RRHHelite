@@ -25,6 +25,18 @@ CREATE TABLE IF NOT EXISTS jobs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- TABLA DE ENTREVISTAS
+CREATE TABLE IF NOT EXISTS interviews (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    candidate_id UUID REFERENCES candidates(id) ON DELETE CASCADE,
+    scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    type TEXT DEFAULT 'Video' CHECK (type IN ('Video', 'Presencial')),
+    location TEXT, -- Link de video o dirección física
+    notes TEXT,
+    status TEXT DEFAULT 'Pendiente' CHECK (status IN ('Pendiente', 'Realizada', 'Cancelada')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- TABLA DE EVALUACIONES
 CREATE TABLE IF NOT EXISTS evaluations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -50,8 +62,9 @@ ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE evaluations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE jobs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE interviews ENABLE ROW LEVEL SECURITY;
 
--- POLÍTICAS (Usando DO para evitar errores si ya existen)
+-- POLÍTICAS
 DO $$ 
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all for authenticated' AND tablename = 'candidates') THEN
@@ -68,5 +81,9 @@ BEGIN
 
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all for authenticated' AND tablename = 'jobs') THEN
         CREATE POLICY "Allow all for authenticated" ON jobs FOR ALL TO authenticated USING (true);
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow all for authenticated' AND tablename = 'interviews') THEN
+        CREATE POLICY "Allow all for authenticated" ON interviews FOR ALL TO authenticated USING (true);
     END IF;
 END $$;

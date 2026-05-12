@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, 
   Mail, 
@@ -13,7 +13,10 @@ import {
   Send,
   Loader2,
   Share2,
-  ChevronRight
+  Calendar,
+  Video,
+  X,
+  Clock
 } from 'lucide-react';
 import { Candidate } from '../types';
 
@@ -31,6 +34,15 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
   const [newNote, setNewNote] = useState('');
   const [noteRating, setNoteRating] = useState(5);
   const [savingNote, setSavingNote] = useState(false);
+  
+  // Interview scheduling
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [interviewData, setInterviewData] = useState({
+    date: '',
+    time: '',
+    type: 'Video',
+    location: ''
+  });
 
   useEffect(() => {
     if (candidateId) fetchCandidateData();
@@ -64,6 +76,16 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
 
   const handleUpdateStage = async (newStage: string) => {
     if (!candidate) return;
+    if (newStage === 'Entrevista') {
+      setIsScheduleModalOpen(true);
+      return;
+    }
+    
+    updateStageInDb(newStage);
+  };
+
+  const updateStageInDb = async (newStage: string) => {
+    if (!candidate) return;
     try {
       const { error } = await supabase
         .from('candidates')
@@ -77,6 +99,34 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
     }
   };
 
+  const handleScheduleInterview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!candidate) return;
+
+    try {
+      // 1. Create interview record
+      const scheduledAt = `${interviewData.date}T${interviewData.time}:00`;
+      const { error: intError } = await supabase
+        .from('interviews')
+        .insert([{
+          candidate_id: candidate.id,
+          scheduled_at: scheduledAt,
+          type: interviewData.type,
+          location: interviewData.location
+        }]);
+
+      if (intError) throw intError;
+
+      // 2. Update candidate stage
+      await updateStageInDb('Entrevista');
+      
+      setIsScheduleModalOpen(false);
+      fetchCandidateData();
+    } catch (error) {
+      console.error('Error scheduling interview:', error);
+    }
+  };
+
   const handleAddNote = async () => {
     if (!newNote || !candidate) return;
     setSavingNote(true);
@@ -85,7 +135,7 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
         .from('evaluations')
         .insert([{
           candidate_id: candidate.id,
-          interviewer_name: 'Administrador', // Mocked for now
+          interviewer_name: 'Administrador',
           score: noteRating,
           observations: newNote
         }]);
@@ -134,8 +184,12 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
               </div>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button className="secondary-btn" style={{ padding: '12px 24px', fontWeight: 700 }}>Enviar Mensaje</button>
-                <button className="primary-btn" style={{ padding: '12px 24px', fontWeight: 700, background: 'var(--secondary)' }}>
-                  <Share2 size={18} /> Cambiar de Etapa
+                <button 
+                  onClick={() => setIsScheduleModalOpen(true)}
+                  className="primary-btn" 
+                  style={{ padding: '12px 24px', fontWeight: 700, background: 'var(--secondary)' }}
+                >
+                  <Calendar size={18} /> Agendar Entrevista
                 </button>
               </div>
             </div>
@@ -183,48 +237,28 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '32px' }}>
-        {/* Left Col: Docs & Skills */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
           <div className="dashboard-card" style={{ padding: '24px' }}>
             <h4 style={{ fontWeight: 800, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <FileText size={20} color="var(--primary)" /> Documentos
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {[
-                { name: `CV_${candidate.full_name.replace(' ', '_')}.pdf`, size: '2.4 MB' },
-                { name: 'Portafolio_Diseño.pdf', size: '15.8 MB' }
-              ].map((doc, i) => (
-                <div key={i} style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ padding: '8px', background: '#FEF2F2', color: '#EF4444', borderRadius: '8px' }}><FileText size={20} /></div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontSize: '13px', fontWeight: 700 }}>{doc.name}</p>
-                    <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{doc.size}</p>
-                  </div>
+              <div style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ padding: '8px', background: '#FEF2F2', color: '#EF4444', borderRadius: '8px' }}><FileText size={20} /></div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '13px', fontWeight: 700 }}>CV_{candidate.full_name.replace(' ', '_')}.pdf</p>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>2.4 MB</p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="dashboard-card" style={{ padding: '24px' }}>
-            <h4 style={{ fontWeight: 800, marginBottom: '16px' }}>Habilidades Destacadas</h4>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {['React', 'TypeScript', 'UI Design', 'Supabase', 'Figma', 'Node.js'].map(skill => (
-                <span key={skill} style={{ padding: '6px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '20px', fontSize: '12px', fontWeight: 600 }}>{skill}</span>
-              ))}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Right Col: Evaluations */}
         <div className="dashboard-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <h4 style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '10px' }}>
               <MessageSquare size={20} color="var(--primary)" /> Evaluaciones y Notas
             </h4>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 800 }}>4.8</span>
-              <Star size={16} fill="#F59E0B" color="#F59E0B" />
-            </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '32px' }}>
@@ -238,50 +272,70 @@ export default function CandidateDetail({ candidateId, onBack }: CandidateDetail
                       <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{new Date(ev.created_at).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '2px' }}>
-                    {[1,2,3,4,5].map(s => <Star key={s} size={12} fill={s <= ev.score ? '#F59E0B' : 'transparent'} color={s <= ev.score ? '#F59E0B' : '#CBD5E1'} />)}
-                  </div>
                 </div>
-                <p style={{ fontSize: '14px', lineHeight: '1.6', color: 'var(--text-main)' }}>{ev.observations}</p>
+                <p style={{ fontSize: '14px', color: 'var(--text-main)' }}>{ev.observations}</p>
               </div>
             ))}
           </div>
 
-          {/* New Note Form */}
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px' }}>
             <h5 style={{ fontSize: '13px', fontWeight: 700, marginBottom: '12px' }}>Añadir nueva nota</h5>
             <textarea 
               value={newNote}
               onChange={e => setNewNote(e.target.value)}
-              placeholder="Escribe tus comentarios sobre el candidato..."
+              placeholder="Escribe tus comentarios..."
               style={{ width: '100%', height: '100px', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)', outline: 'none', fontSize: '14px', resize: 'none', marginBottom: '16px' }}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>Calificación:</span>
-                {[1,2,3,4,5].map(s => (
-                  <Star 
-                    key={s} 
-                    size={20} 
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => setNoteRating(s)}
-                    fill={s <= noteRating ? '#F59E0B' : 'transparent'} 
-                    color={s <= noteRating ? '#F59E0B' : '#CBD5E1'} 
-                  />
-                ))}
-              </div>
-              <button 
-                onClick={handleAddNote}
-                disabled={savingNote || !newNote}
-                className="primary-btn" 
-                style={{ padding: '10px 24px', background: '#065F46' }}
-              >
-                {savingNote ? <Loader2 size={18} className="animate-spin" /> : 'Publicar Nota'}
-              </button>
-            </div>
+            <button 
+              onClick={handleAddNote}
+              disabled={savingNote || !newNote}
+              className="primary-btn" 
+              style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+            >
+              {savingNote ? <Loader2 size={18} className="animate-spin" /> : 'Publicar Nota'}
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Modal Agendar Entrevista */}
+      <AnimatePresence>
+        {isScheduleModalOpen && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="dashboard-card" style={{ width: '100%', maxWidth: '500px', padding: '32px', position: 'relative' }}>
+              <button onClick={() => setIsScheduleModalOpen(false)} style={{ position: 'absolute', right: '24px', top: '24px', border: 'none', background: 'var(--surface)', padding: '8px', borderRadius: '50%', cursor: 'pointer' }}><X size={20} /></button>
+              <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '24px' }}>Agendar Entrevista</h3>
+              <form onSubmit={handleScheduleInterview} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>FECHA</label>
+                    <input type="date" required className="auth-input" style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)' }} value={interviewData.date} onChange={e => setInterviewData({...interviewData, date: e.target.value})} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>HORA</label>
+                    <input type="time" required className="auth-input" style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)' }} value={interviewData.time} onChange={e => setInterviewData({...interviewData, time: e.target.value})} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>TIPO</label>
+                  <select style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)', background: 'white' }} value={interviewData.type} onChange={e => setInterviewData({...interviewData, type: e.target.value})}>
+                    <option>Video</option>
+                    <option>Presencial</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, marginBottom: '6px' }}>{interviewData.type === 'Video' ? 'LINK DE REUNIÓN' : 'UBICACIÓN'}</label>
+                  <input required className="auth-input" style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--border)' }} value={interviewData.location} onChange={e => setInterviewData({...interviewData, location: e.target.value})} placeholder={interviewData.type === 'Video' ? 'Meet, Zoom, etc.' : 'Dirección física'} />
+                </div>
+                <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                  <button type="button" onClick={() => setIsScheduleModalOpen(false)} className="secondary-btn" style={{ flex: 1, padding: '14px' }}>Cancelar</button>
+                  <button type="submit" className="primary-btn" style={{ flex: 2, padding: '14px', background: 'var(--secondary)' }}>Agendar y Cambiar Etapa</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

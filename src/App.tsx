@@ -12,6 +12,7 @@ import Dashboard from './views/Dashboard';
 import CandidatesList from './views/CandidatesList';
 import CandidateDetail from './views/CandidateDetail';
 import JobsList from './views/JobsList';
+import InterviewsList from './views/InterviewsList';
 import Auth from './views/Auth';
 import { View } from './types';
 import { Session } from '@supabase/supabase-js';
@@ -66,10 +67,11 @@ export default function App() {
           {currentView === 'dashboard' && <Dashboard />}
           {currentView === 'candidates' && <CandidatesList onSelectCandidate={handleNavigate} />}
           {currentView === 'jobs' && <JobsList />}
+          {currentView === 'interviews' && <InterviewsList />}
           {currentView === 'detail' && <CandidateDetail candidateId={selectedCandidateId} onBack={() => setCurrentView('candidates')} />}
           
           {/* Fallback for other menu items in this demo */}
-          {(currentView === 'interviews' || currentView === 'evaluations') && (
+          {currentView === 'evaluations' && (
             <div className="content-area">
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '100px 0', textAlign: 'center' }}>
                 <h3 style={{ fontSize: '24px', fontWeight: 800, marginBottom: '16px' }}>Próximamente</h3>
