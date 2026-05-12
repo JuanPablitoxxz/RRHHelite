@@ -19,7 +19,13 @@ import { Session } from '@supabase/supabase-js';
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleNavigate = (view: View, id?: string) => {
+    setCurrentView(view);
+    if (id) setSelectedCandidateId(id);
+  };
 
   useEffect(() => {
     // Check current session
@@ -51,16 +57,16 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <Sidebar currentView={currentView} onNavigate={setCurrentView} />
+      <Sidebar currentView={currentView} onNavigate={handleNavigate} />
       
       <div className="main-wrapper">
         <Header user={session.user} />
         
         <main>
           {currentView === 'dashboard' && <Dashboard />}
-          {currentView === 'candidates' && <CandidatesList onSelectCandidate={setCurrentView} />}
+          {currentView === 'candidates' && <CandidatesList onSelectCandidate={handleNavigate} />}
           {currentView === 'jobs' && <JobsList />}
-          {currentView === 'detail' && <CandidateDetail />}
+          {currentView === 'detail' && <CandidateDetail candidateId={selectedCandidateId} onBack={() => setCurrentView('candidates')} />}
           
           {/* Fallback for other menu items in this demo */}
           {(currentView === 'interviews' || currentView === 'evaluations') && (
