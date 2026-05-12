@@ -81,27 +81,25 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="stats-grid">
         {[
-          { label: 'Vacantes Activas', val: '24', change: '+12% vs mes anterior', icon: Briefcase, color: 'bg-primary/10 text-primary' },
-          { label: 'Total Candidatos', val: '1,284', change: '+48 nuevos', icon: Users, color: 'bg-secondary/10 text-secondary' },
-          { label: 'Entrevistas Hoy', val: '8', change: 'Próxima en 45 min', icon: Calendar, color: 'bg-orange-50 text-orange-600' }
+          { label: 'Vacantes Activas', val: '24', change: '+12%', icon: Briefcase, color: '#0D9488' },
+          { label: 'Total Candidatos', val: '1,284', change: '+48', icon: Users, color: '#6366F1' },
+          { label: 'Entrevistas Hoy', val: '8', change: 'En 45 min', icon: Calendar, color: '#F59E0B' }
         ].map((stat, i) => (
           <motion.div 
             key={i}
             whileHover={{ y: -4 }}
-            className="dashboard-card flex flex-col justify-between h-44"
+            className="dashboard-card"
           >
-            <div className="flex justify-between items-start">
-              <div className={`p-3 rounded-2xl ${stat.color}`}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ color: stat.color }}>
                 <stat.icon size={24} />
               </div>
-              <span className={`text-xs font-bold px-2 py-1 rounded-full ${stat.color}`}>{stat.change}</span>
+              <span style={{ fontSize: '12px', fontWeight: 'bold', color: stat.color }}>{stat.change}</span>
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{stat.label}</p>
-              <h3 className="text-4xl font-extrabold text-slate-900">{stat.val}</h3>
-            </div>
+            <p className="stat-label">{stat.label}</p>
+            <h3 className="stat-val">{stat.val}</h3>
           </motion.div>
         ))}
       </div>

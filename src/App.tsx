@@ -16,10 +16,10 @@ export default function App() {
   const [currentView, setCurrentView] = useState<View>('dashboard');
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <div className="app-container">
       <Sidebar currentView={currentView} onNavigate={setCurrentView} />
       
-      <div className="lg:ml-64 flex flex-col min-h-screen pb-24 lg:pb-0">
+      <div className="main-content">
         <Header />
         
         <main className="flex-1 p-6 lg:p-10">

@@ -25,13 +25,13 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
   ];
 
   return (
-    <aside className="hidden lg:flex flex-col h-screen fixed left-0 top-0 w-64 border-r border-slate-100 bg-slate-50/50 py-8">
-      <div className="px-6 mb-10">
-        <h1 className="text-2xl font-bold text-primary tracking-tight">TalentFlow</h1>
-        <p className="text-xs text-slate-500 font-medium opacity-70">Recruitement Suite</p>
+    <aside className="sidebar">
+      <div className="sidebar-logo">
+        <h1>TalentFlow</h1>
+        <p style={{ fontSize: '10px', opacity: 0.6 }}>Recruitement Suite</p>
       </div>
 
-      <nav className="flex-1 px-4 space-y-1">
+      <nav className="nav-menu">
         {menuItems.map((item) => {
           const isActive = currentView === item.id || (currentView === 'detail' && item.id === 'candidates');
           const Icon = item.icon;
@@ -39,13 +39,9 @@ export default function Sidebar({ currentView, onNavigate }: SidebarProps) {
             <button
               key={item.id}
               onClick={() => onNavigate(item.id as View)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                isActive 
-                ? 'bg-white text-primary shadow-sm ring-1 ring-slate-200' 
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
-              }`}
+              className={`nav-item ${isActive ? 'active' : ''}`}
             >
-              <Icon size={20} className={isActive ? 'text-primary' : 'text-slate-400'} />
+              <Icon size={20} />
               {item.label}
             </button>
           );
