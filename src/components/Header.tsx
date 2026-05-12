@@ -17,12 +17,6 @@ export default function Header({ user }: HeaderProps) {
         <input type="text" placeholder="Buscar candidatos o vacantes..." />
       </div>
 
-      <div className="header-tabs">
-        <div className="tab-item active">Métricas</div>
-        <div className="tab-item">Informes</div>
-        <div className="tab-item">Ajustes</div>
-      </div>
-
       <div className="user-profile">
         <div style={{ display: 'flex', gap: '16px', marginRight: '24px', color: '#64748B' }}>
           <Bell size={20} style={{ cursor: 'pointer' }} />

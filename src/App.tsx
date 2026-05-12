@@ -56,15 +56,14 @@ export default function App() {
       
       if (error) {
         console.error('Database error fetching role:', error);
-        setUserRole('user');
-        return;
+        return; // Retain current state on error
       }
 
       if (data) {
         console.log('Role found:', data.role);
         setUserRole(data.role as UserRole);
         
-        // Redirección forzada según el rol
+        // Redirección forzada según el rol solo si estamos en el render inicial
         if (data.role === 'admin' || data.role === 'interviewer') {
           setCurrentView('dashboard');
         } else {
@@ -77,7 +76,6 @@ export default function App() {
       }
     } catch (err) {
       console.error('Fatal error fetching role:', err);
-      setUserRole('user');
     }
   };
 
@@ -126,8 +124,6 @@ export default function App() {
           )}
         </main>
       </div>
-
-      <BottomNav currentView={currentView} onNavigate={setCurrentView} />
     </div>
   );
 }
