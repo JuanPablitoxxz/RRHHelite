@@ -18,7 +18,7 @@ import UsersList from './views/UsersList';
 import Settings from './views/Settings';
 import ChatView from './views/ChatView';
 import Auth from './views/Auth';
-import { View } from './types';
+import { View, UserRole } from './types';
 import { Session } from '@supabase/supabase-js';
 
 export default function App() {
