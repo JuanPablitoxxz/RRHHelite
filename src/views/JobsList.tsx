@@ -2,20 +2,21 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Briefcase, 
+  Search, 
   MapPin, 
   Building2, 
   Clock, 
+  Briefcase, 
   Plus, 
-  Search, 
-  MoreVertical,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  PauseCircle,
-  Edit2,
-  Trash2,
-  X
+  MoreVertical, 
+  Edit2, 
+  Trash2, 
+  CheckCircle2, 
+  XCircle, 
+  PauseCircle, 
+  Loader2, 
+  X,
+  Upload
 } from 'lucide-react';
 import { Job, UserRole } from '../types';
 
@@ -47,6 +48,8 @@ export default function JobsList({ userRole = 'admin', userEmail = '', userName 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyPhone, setApplyPhone] = useState('');
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
     fetchJobs();
@@ -131,8 +134,28 @@ export default function JobsList({ userRole = 'admin', userEmail = '', userName 
   const handleApply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedJob) return;
+    if (!cvFile) {
+      alert('Por favor adjunta tu Hoja de Vida en PDF.');
+      return;
+    }
 
+    setIsApplying(true);
     try {
+      // 1. Upload CV to storage
+      const fileExt = cvFile.name.split('.').pop();
+      const fileName = `${Date.now()}_${userName?.replace(/\s+/g, '_')}.${fileExt}`;
+      const { error: uploadError, data } = await supabase.storage
+        .from('cvs')
+        .upload(fileName, cvFile);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Get public URL
+      const { data: publicUrlData } = supabase.storage
+        .from('cvs')
+        .getPublicUrl(fileName);
+
+      // 3. Insert Candidate
       const { error } = await supabase
         .from('candidates')
         .insert([{
@@ -140,16 +163,21 @@ export default function JobsList({ userRole = 'admin', userEmail = '', userName 
           email: userEmail || 'user@example.com',
           phone: applyPhone,
           position: selectedJob.title,
-          stage: 'Postulación'
+          stage: 'Postulación',
+          cv_url: publicUrlData.publicUrl
         }]);
 
       if (error) throw error;
+      
       alert('¡Aplicación enviada con éxito! Revisa la sección de Entrevistas pronto.');
       setIsApplyModalOpen(false);
       setApplyPhone('');
+      setCvFile(null);
     } catch (error) {
       console.error('Error applying to job:', error);
-      alert('Hubo un error al enviar tu aplicación. Intenta nuevamente.');
+      alert('Hubo un error al enviar tu aplicación. Verifica que el archivo no sea demasiado grande.');
+    } finally {
+      setIsApplying(false);
     }
   };
 
@@ -430,15 +458,28 @@ export default function JobsList({ userRole = 'admin', userEmail = '', userName 
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Hoja de Vida (CV)</label>
-                  <div style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '24px', textAlign: 'center' }}>
-                    <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Para esta demo, no es necesario subir un archivo real.</p>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>Hoja de Vida (PDF)</label>
+                  <div style={{ border: '2px dashed var(--border)', borderRadius: '12px', padding: '24px', textAlign: 'center', cursor: 'pointer', position: 'relative' }}>
+                    <input 
+                      type="file" 
+                      accept=".pdf" 
+                      onChange={(e) => setCvFile(e.target.files ? e.target.files[0] : null)}
+                      style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
+                      required
+                    />
+                    <Upload size={24} color="var(--primary)" style={{ margin: '0 auto 8px' }} />
+                    <p style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: 600 }}>
+                      {cvFile ? cvFile.name : 'Haz clic o arrastra tu PDF aquí'}
+                    </p>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Solo archivos .pdf (Max 5MB)</p>
                   </div>
                 </div>
                 
                 <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
-                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="secondary-btn" style={{ flex: 1, padding: '14px', justifyContent: 'center' }}>Cancelar</button>
-                  <button type="submit" className="primary-btn" style={{ flex: 2, padding: '14px', justifyContent: 'center' }}>Enviar Aplicación</button>
+                  <button type="button" onClick={() => setIsApplyModalOpen(false)} className="secondary-btn" style={{ flex: 1, padding: '14px', justifyContent: 'center' }} disabled={isApplying}>Cancelar</button>
+                  <button type="submit" className="primary-btn" style={{ flex: 2, padding: '14px', justifyContent: 'center' }} disabled={isApplying || !cvFile}>
+                    {isApplying ? <Loader2 size={18} className="animate-spin" /> : 'Enviar Aplicación'}
+                  </button>
                 </div>
               </form>
             </motion.div>

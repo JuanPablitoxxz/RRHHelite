@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     position TEXT NOT NULL,
     stage TEXT DEFAULT 'Postulación' CHECK (stage IN ('Postulación', 'Preselección', 'Entrevista', 'Evaluación', 'Contratado')),
     rating INTEGER DEFAULT 0,
+    cv_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -145,3 +146,16 @@ BEGIN
         CREATE POLICY "Allow all for authenticated" ON interviews FOR ALL TO authenticated USING (true);
     END IF;
 END $$;
+
+-- ALMACENAMIENTO (STORAGE) PARA HOJAS DE VIDA (CVs)
+-- OJO: Asegúrate de habilitar Storage en el panel de Supabase y correr estos comandos.
+INSERT INTO storage.buckets (id, name, public) VALUES ('cvs', 'cvs', true) ON CONFLICT DO NOTHING;
+
+CREATE POLICY "Public Access for CVs" 
+ON storage.objects FOR SELECT 
+USING (bucket_id = 'cvs');
+
+CREATE POLICY "Authenticated users can upload CVs" 
+ON storage.objects FOR INSERT 
+TO authenticated 
+WITH CHECK (bucket_id = 'cvs');

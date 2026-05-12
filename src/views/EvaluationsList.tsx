@@ -37,7 +37,30 @@ export default function EvaluationsList({ userRole = 'admin', userEmail = '', us
   const [myCandidateId, setMyCandidateId] = useState<string | null>(null);
   
   // Applicant form state
-  const [testAnswers, setTestAnswers] = useState({ q1: '', q2: '' });
+  const questions = [
+    "1. ¿Cómo manejas el estrés en picos de trabajo?",
+    "2. ¿Cuál es tu mayor logro profesional hasta la fecha?",
+    "3. ¿Cómo resolverías un conflicto con un compañero de equipo?",
+    "4. ¿Qué te motiva a postularte a esta empresa?",
+    "5. ¿Dónde te ves en 5 años profesionalmente?",
+    "6. ¿Prefieres trabajar solo o en equipo y por qué?",
+    "7. ¿Cómo te mantienes actualizado en tu área técnica?",
+    "8. Describe una situación donde tuviste que aprender algo nuevo rápidamente.",
+    "9. ¿Qué herramientas de software dominas con mayor experticia?",
+    "10. ¿Cómo priorizas tus tareas diarias?",
+    "11. ¿Qué harías si no estás de acuerdo con una decisión de tu jefe?",
+    "12. ¿Qué significa para ti la puntualidad?",
+    "13. ¿Cómo reaccionas ante la crítica constructiva?",
+    "14. ¿Has liderado proyectos anteriormente? Cuéntanos brevemente.",
+    "15. ¿Qué esperas de un buen ambiente laboral?",
+    "16. ¿Cómo manejas los plazos de entrega ajustados?",
+    "17. ¿Qué harías si ves a un compañero cometiendo una falta ética?",
+    "18. ¿Qué te diferencia de otros candidatos para este puesto?",
+    "19. ¿Estás dispuesto a viajar o cambiar de residencia si es necesario?",
+    "20. ¿Qué pregunta no te hemos hecho que te gustaría responder?"
+  ];
+
+  const [testAnswers, setTestAnswers] = useState<string[]>(new Array(questions.length).fill(''));
   const [hasCompletedTest, setHasCompletedTest] = useState(false);
 
   useEffect(() => {
@@ -96,7 +119,7 @@ export default function EvaluationsList({ userRole = 'admin', userEmail = '', us
     try {
       // Calculate a random score for the demo
       const score = Math.floor(Math.random() * 2) + 4; // 4 or 5
-      const obs = `Q1: ${testAnswers.q1}\nQ2: ${testAnswers.q2}`;
+      const obs = questions.map((q, i) => `${q}\nR: ${testAnswers[i]}`).join('\n\n');
       
       const { error } = await supabase.from('evaluations').insert([{
         candidate_id: myCandidateId,
@@ -169,36 +192,32 @@ export default function EvaluationsList({ userRole = 'admin', userEmail = '', us
           ) : (
             <form onSubmit={handleSubmitTest} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <div style={{ padding: '16px', background: 'var(--primary-light)', borderRadius: '12px', border: '1px solid var(--primary)', color: 'var(--primary)', marginBottom: '8px' }}>
-                <h4 style={{ fontWeight: 800, marginBottom: '4px' }}>Prueba de Habilidades</h4>
-                <p style={{ fontSize: '13px' }}>Por favor, responde a las siguientes preguntas con honestidad. Tómate tu tiempo.</p>
+                <h4 style={{ fontWeight: 800, marginBottom: '4px' }}>Prueba de Habilidades Completa</h4>
+                <p style={{ fontSize: '13px' }}>Por favor, responde a las 20 preguntas con detalle. Tu proceso depende de esto.</p>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>1. Describe una situación donde tuviste que resolver un problema complejo bajo presión.</label>
-                <textarea 
-                  required
-                  value={testAnswers.q1}
-                  onChange={e => setTestAnswers({...testAnswers, q1: e.target.value})}
-                  className="auth-input"
-                  style={{ width: '100%', height: '120px', resize: 'none', padding: '16px' }}
-                  placeholder="Escribe tu respuesta aquí..."
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {questions.map((q, index) => (
+                  <div key={index}>
+                    <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '8px' }}>{q}</label>
+                    <textarea 
+                      required
+                      value={testAnswers[index]}
+                      onChange={e => {
+                        const newAnswers = [...testAnswers];
+                        newAnswers[index] = e.target.value;
+                        setTestAnswers(newAnswers);
+                      }}
+                      className="auth-input"
+                      style={{ width: '100%', height: '80px', resize: 'none', padding: '12px', borderRadius: '10px' }}
+                      placeholder="Escribe tu respuesta aquí..."
+                    />
+                  </div>
+                ))}
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '14px', fontWeight: 700, marginBottom: '12px' }}>2. ¿Qué valor principal crees que aportarías a nuestro equipo?</label>
-                <textarea 
-                  required
-                  value={testAnswers.q2}
-                  onChange={e => setTestAnswers({...testAnswers, q2: e.target.value})}
-                  className="auth-input"
-                  style={{ width: '100%', height: '120px', resize: 'none', padding: '16px' }}
-                  placeholder="Escribe tu respuesta aquí..."
-                />
-              </div>
-
-              <button type="submit" className="primary-btn" style={{ justifyContent: 'center', padding: '16px', fontSize: '16px', marginTop: '12px' }}>
-                Enviar Evaluación
+              <button type="submit" className="primary-btn" style={{ justifyContent: 'center', padding: '16px', fontSize: '16px', marginTop: '12px', position: 'sticky', bottom: '20px', boxShadow: 'var(--shadow-lg)' }}>
+                Finalizar y Enviar Prueba
               </button>
             </form>
           )}

@@ -267,13 +267,27 @@ export default function CandidateDetail({ candidateId, onBack, userEmail }: Cand
               <FileText size={20} color="var(--primary)" /> Documentos
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ padding: '8px', background: '#FEF2F2', color: '#EF4444', borderRadius: '8px' }}><FileText size={20} /></div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: '13px', fontWeight: 700 }}>CV_{candidate.full_name.replace(' ', '_')}.pdf</p>
-                  <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>2.4 MB</p>
+              {candidate.cv_url ? (
+                <div 
+                  onClick={() => window.open(candidate.cv_url, '_blank')}
+                  style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', transition: 'all 0.2s' }}
+                  onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                >
+                  <div style={{ padding: '8px', background: '#FEF2F2', color: '#EF4444', borderRadius: '8px' }}><FileText size={20} /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '13px', fontWeight: 700 }}>CV_{candidate.full_name.replace(' ', '_')}.pdf</p>
+                    <p style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>Ver PDF</p>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px', opacity: 0.6 }}>
+                  <div style={{ padding: '8px', background: 'var(--surface)', color: 'var(--text-muted)', borderRadius: '8px' }}><FileText size={20} /></div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: '13px', fontWeight: 700 }}>Sin CV adjunto</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
