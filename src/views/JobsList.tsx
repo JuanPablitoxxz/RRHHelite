@@ -173,9 +173,10 @@ export default function JobsList({ userRole = 'admin', userEmail = '', userName 
       setIsApplyModalOpen(false);
       setApplyPhone('');
       setCvFile(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error applying to job:', error);
-      alert('Hubo un error al enviar tu aplicación. Verifica que el archivo no sea demasiado grande.');
+      const message = error.message || 'Error desconocido';
+      alert(`Hubo un error al enviar tu aplicación: ${message}`);
     } finally {
       setIsApplying(false);
     }
